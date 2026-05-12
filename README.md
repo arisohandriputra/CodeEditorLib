@@ -4,6 +4,22 @@
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-2.0+-purple.svg)](https://dotnet.microsoft.com/)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D4.svg)](https://www.microsoft.com/windows)
 
+---
+
+<div align="center">
+
+## 💖 Support This Project
+
+If CodeEditorLib saved you time or you're using it in something real, consider sponsoring. It helps me keep maintaining this and building more open source tools.
+
+### [☕ Sponsor on GitHub → github.com/sponsors/arisohandriputra](https://github.com/sponsors/arisohandriputra)
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?style=for-the-badge&logo=github-sponsors&logoColor=white)](https://github.com/sponsors/arisohandriputra)
+
+</div>
+
+---
+
 A Windows Forms code editor control for .NET. Drop it into any WinForms project and you get a working code editor - syntax highlighting, line numbers, themes, undo/redo, auto-indent, find & replace, the whole thing. No external dependencies.
 
 I built this because I kept rewriting the same editor boilerplate across different projects. Now I just reference the DLL and move on.

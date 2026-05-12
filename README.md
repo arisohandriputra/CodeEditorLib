@@ -19,6 +19,7 @@ If CodeEditorLib saved you time or you're using it in something real, consider s
 </div>
 
 ---
+<img width="1102" height="692" alt="image" src="https://github.com/user-attachments/assets/b06964fe-41da-4f7a-ba88-427483a4d3d8" />
 
 A Windows Forms code editor control for .NET. Drop it into any WinForms project and you get a working code editor - syntax highlighting, line numbers, themes, undo/redo, auto-indent, find & replace, the whole thing. No external dependencies.
 

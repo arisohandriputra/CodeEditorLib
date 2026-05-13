@@ -54,8 +54,9 @@
     <ApplicationManifest>My Project\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CodeEditorLib">
-      <HintPath>..\..\CodeEditorLib_v8\CodeEditorLib_v5_noac\CodeEditorLib\bin\Debug\CodeEditorLib.dll</HintPath>
+    <Reference Include="CodeEditorLib, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\CodeEditorLib_v1_2_fixed\CodeEditorLib_project_fixed\CodeEditorLib\bin\Debug\CodeEditorLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />

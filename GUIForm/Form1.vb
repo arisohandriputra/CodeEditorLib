@@ -6,34 +6,29 @@ Imports CodeEditorLib.Themes
 
 Public Class Form1
 
-    ' ─────────────────────────────────────────────
-    '  Data structures
-    ' ─────────────────────────────────────────────
     Private Structure EditorTab
         Dim FilePath As String
         Dim IsModified As Boolean
         Dim Editor As CodeEditorControl
         Dim TabButton As TabButtonControl
         Dim UntitledIndex As Integer
-        Dim SavedCode As String  ' Snapshot konten saat terakhir disimpan/dibuka
+        Dim SavedCode As String
     End Structure
 
     Private _tabs As New List(Of EditorTab)
     Private _activeIndex As Integer = -1
     Private _untitledCounter As Integer = 0
-    Private _isDark As Boolean = True
+    Private _isDark As Boolean = False
     Private _recentFiles As New List(Of String)
-    Private _isLoadingFile As Boolean = False  ' Flag: sedang load file, abaikan TextChanged
+    Private _isLoadingFile As Boolean = False
 
-    ' ─────────────────────────────────────────────
-    '  Custom tab button control
-    ' ─────────────────────────────────────────────
     Public Class TabButtonControl
         Inherits Control
 
         Public Property TabTitle As String = "Untitled"
         Public Property IsActive As Boolean = False
         Public Property IsModified As Boolean = False
+        Public Property IsDarkTheme As Boolean = False
         Public Event CloseClicked As EventHandler
 
         Private _closeHovered As Boolean = False
@@ -57,12 +52,22 @@ Public Class Form1
             Dim fg As Color
             Dim accentColor As Color = Color.FromArgb(0, 120, 212)
 
-            If IsActive Then
-                bg = Color.FromArgb(255, 255, 255)
-                fg = Color.FromArgb(30, 30, 30)
+            If IsDarkTheme Then
+                If IsActive Then
+                    bg = Color.FromArgb(37, 37, 38)
+                    fg = Color.FromArgb(220, 220, 220)
+                Else
+                    bg = Color.FromArgb(45, 45, 48)
+                    fg = Color.FromArgb(150, 150, 150)
+                End If
             Else
-                bg = Color.FromArgb(213, 213, 213)
-                fg = Color.FromArgb(90, 90, 90)
+                If IsActive Then
+                    bg = Color.FromArgb(255, 255, 255)
+                    fg = Color.FromArgb(30, 30, 30)
+                Else
+                    bg = Color.FromArgb(213, 213, 213)
+                    fg = Color.FromArgb(90, 90, 90)
+                End If
             End If
 
             Using br = New SolidBrush(bg)
@@ -75,14 +80,15 @@ Public Class Form1
                 End Using
             End If
 
-            Using pen = New Pen(Color.FromArgb(60, 60, 60), 1)
+            Dim sepColor As Color = If(IsDarkTheme, Color.FromArgb(60, 60, 65), Color.FromArgb(160, 160, 160))
+            Using pen = New Pen(sepColor, 1)
                 g.DrawLine(pen, Width - 1, 4, Width - 1, Height - 4)
             End Using
 
             Dim xOffset As Integer = 8
             Dim displayTitle As String = TabTitle
             If IsModified Then
-                displayTitle = "* " & TabTitle
+                displayTitle = "● " & TabTitle
             End If
 
             Dim cx = Width - 20
@@ -106,15 +112,21 @@ Public Class Form1
                     Dim sf As New StringFormat()
                     sf.Alignment = StringAlignment.Center
                     sf.LineAlignment = StringAlignment.Center
-                    g.DrawString("x", New Font("Segoe UI", 8, FontStyle.Bold), closeFg,
+                    g.DrawString("×", New Font("Segoe UI", 8, FontStyle.Bold), closeFg,
                                  New RectangleF(cx, cy, 16, 16), sf)
                 End Using
             Else
-                Using closeFg = New SolidBrush(If(IsActive, Color.FromArgb(180, 180, 180), Color.FromArgb(100, 100, 100)))
+                Dim closeFgColor As Color
+                If IsDarkTheme Then
+                    closeFgColor = If(IsActive, Color.FromArgb(160, 160, 160), Color.FromArgb(90, 90, 90))
+                Else
+                    closeFgColor = If(IsActive, Color.FromArgb(120, 120, 120), Color.FromArgb(100, 100, 100))
+                End If
+                Using closeFg = New SolidBrush(closeFgColor)
                     Dim sf As New StringFormat()
                     sf.Alignment = StringAlignment.Center
                     sf.LineAlignment = StringAlignment.Center
-                    g.DrawString("x", New Font("Segoe UI", 8), closeFg,
+                    g.DrawString("×", New Font("Segoe UI", 8), closeFg,
                                  New RectangleF(cx, cy, 16, 16), sf)
                 End Using
             End If
@@ -143,7 +155,6 @@ Public Class Form1
     ' ─────────────────────────────────────────────
     Private Sub Form1_Load(ByVal sender As Object, ByVal e As EventArgs) Handles MyBase.Load
         Me.Icon = My.Resources.favicon
-        ' ── Localisation: build language menu & apply default (English) ──
         LanguageManager.Instance.BuildLanguageMenu(UILanguageToolStripMenuItem,
             Sub(code As String)
                 ApplyLanguage()
@@ -154,24 +165,22 @@ Public Class Form1
         ApplyTheme()
         LoadRecentFiles()
         NewTab()
-        HandleCommandLineArgs()   ' Buka file dari double-klik Explorer
+        HandleCommandLineArgs()
         Me.AllowDrop = True
         TabsPanel.AllowDrop = True
         EditorHostPanel.AllowDrop = True
         ShowLineNumbersToolStripMenuItem.Checked = True
-        LightToolStripMenuItem.Checked = False
-        DarkToolStripMenuItem.Checked = True
+        ShowMinimapToolStripMenuItem.Checked = True
+        LightToolStripMenuItem.Checked = True
+        DarkToolStripMenuItem.Checked = False
+        UpdateZoomStatus()
         AddHandler Me.Resize, AddressOf Form1_Resize
         LayoutPanels()
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  LOCALISATION
-    ' ─────────────────────────────────────────────
     Private Sub ApplyLanguage()
         Dim L = LanguageManager.Instance
 
-        ' ── Menu: File ──
         FileToolStripMenuItem.Text = L.Menu("File")
         NewFileToolStripMenuItem.Text = L.Menu("New")
         OpenFileToolStripMenuItem.Text = L.Menu("OpenFile")
@@ -182,8 +191,6 @@ Public Class Form1
         CloseTabToolStripMenuItem.Text = L.Menu("CloseTab")
         CloseAllToolStripMenuItem.Text = L.Menu("CloseAllTabs")
         ExitToolStripMenuItem.Text = L.Menu("Exit")
-
-        ' ── Menu: Edit ──
         EditToolStripMenuItem.Text = L.Menu("Edit")
         UndoToolStripMenuItem.Text = L.Menu("Undo")
         RedoToolStripMenuItem.Text = L.Menu("Redo")
@@ -195,32 +202,32 @@ Public Class Form1
         GoToLineToolStripMenuItem.Text = L.Menu("GoToLine")
         ToggleCommentToolStripMenuItem.Text = L.Menu("ToggleComment")
 
-        ' ── Menu: View ──
         ViewToolStripMenuItem.Text = L.Menu("View")
         WordWrapToolStripMenuItem.Text = L.Menu("WordWrap")
         ShowLineNumbersToolStripMenuItem.Text = L.Menu("ShowLineNumbers")
+        ShowMinimapToolStripMenuItem.Text = "Show Minimap"
 
-        ' ── Menu: Language (code language, not UI language) ──
         LanguageToolStripMenuItem.Text = L.Menu("Language")
         PlainTextToolStripMenuItem.Text = L.Menu("PlainText")
 
-        ' ── Menu: Themes ──
         ThemesToolStripMenuItem.Text = L.Menu("Themes")
         DarkToolStripMenuItem.Text = L.Menu("Dark")
         LightToolStripMenuItem.Text = L.Menu("Light")
+        MonokaiToolStripMenuItem.Text = "Monokai"
+        DraculaToolStripMenuItem.Text = "Dracula"
+        NordToolStripMenuItem.Text = "Nord"
+        SolarizedDarkToolStripMenuItem.Text = "Solarized Dark"
+        SolarizedLightToolStripMenuItem.Text = "Solarized Light"
 
-        ' ── Menu: Help ──
         HelpToolStripMenuItem.Text = L.Menu("Help")
         KeyboardShortcutsToolStripMenuItem.Text = L.Menu("KeyboardShortcuts")
         AboutToolStripMenuItem.Text = L.Menu("About")
 
-        ' ── Toolbar ──
         bNew.Text = L.Toolbar("New")
         bOpen.Text = L.Toolbar("Open")
         bSave.Text = L.Toolbar("Save")
         bFind.Text = L.Toolbar("Find")
 
-        ' ── Find panel ──
         lblFindFind.Text = L.FindPanel("FindLabel")
         lblFindReplace.Text = L.FindPanel("ReplaceLabel")
         btnFindPrev.Text = L.FindPanel("PrevButton")
@@ -230,19 +237,15 @@ Public Class Form1
         chkCaseSensitive.Text = L.FindPanel("CaseButton")
         btnCloseFindPanel.Text = L.FindPanel("CloseButton")
 
-        ' ── Status bar (static labels) ──
         lblEncoding.Text = L.StatusBar("Encoding")
         lblCRLF.Text = L.StatusBar("LineEnding")
         ToolStripStatusLabel1.Text = L.StatusBar("ZoomHint")
 
-        ' Rebuild Recent menu & re-refresh caret/language status
         LoadRecentFiles()
         UpdateStatusBar()
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  TAB MANAGEMENT
-    ' ─────────────────────────────────────────────
+  
     Private Sub NewTab(Optional ByVal filePath As String = "", Optional ByVal content As String = "")
         _untitledCounter += 1
 
@@ -256,17 +259,20 @@ Public Class Form1
         _isLoadingFile = True
         editor.Code = content
         _isLoadingFile = False
-        editor.Theme = If(_isDark, CType(New DarkTheme(), Object), New LightTheme())
+        editor.Theme = GetEditorTheme()
+        editor.ShowMinimap = ShowMinimapToolStripMenuItem.Checked
         editor.AllowDrop = True
         AddHandler editor.DragEnter, AddressOf Editor_DragEnter
         AddHandler editor.DragDrop, AddressOf Editor_DragDrop
         AddHandler editor.CaretPositionChanged, AddressOf Editor_CaretPositionChanged
         AddHandler editor.TextChanged, AddressOf Editor_TextChanged
+        AddHandler editor.MouseWheel, AddressOf Editor_MouseWheel
 
         Dim tabBtn As New TabButtonControl()
         tabBtn.Height = 32
         tabBtn.Width = 160
         tabBtn.Dock = DockStyle.None
+        tabBtn.IsDarkTheme = _isDark
         AddHandler tabBtn.Click, AddressOf TabButton_Click
         AddHandler tabBtn.CloseClicked, AddressOf TabButton_Close
         TabsPanel.Controls.Add(tabBtn)
@@ -282,11 +288,9 @@ Public Class Form1
         End If
 
         _tabs.Add(t)
-        ' Simpan snapshot dari editor.Code SETELAH di-set (bukan dari content mentah)
-        ' karena editor mungkin normalisasi line ending, sehingga perbandingan tetap akurat
         Dim newIdx = _tabs.Count - 1
         Dim tSnap = _tabs(newIdx)
-        tSnap.SavedCode = editor.Code  ' ambil dari editor, bukan dari content
+        tSnap.SavedCode = editor.Code
         _tabs(newIdx) = tSnap
         SwitchToTab(newIdx)
         RepositionTabs()
@@ -300,14 +304,12 @@ Public Class Form1
         Dim panelWidth As Integer = TabsPanel.Width
         Dim needsScroll As Boolean = totalWidth > panelWidth
 
-        ' Clamp scroll offset
         If needsScroll Then
             _tabScrollOffset = Math.Max(0, Math.Min(_tabScrollOffset, totalWidth - panelWidth))
         Else
             _tabScrollOffset = 0
         End If
 
-        ' Position each tab button
         Dim x As Integer = -_tabScrollOffset
         For i = 0 To _tabs.Count - 1
             _tabs(i).TabButton.Location = New Point(x, 0)
@@ -315,7 +317,6 @@ Public Class Form1
             x += _tabs(i).TabButton.Width
         Next
 
-        ' Show/hide scroll buttons
         btnScrollLeft.Visible = needsScroll
         btnScrollRight.Visible = needsScroll
         btnScrollLeft.Enabled = (_tabScrollOffset > 0)
@@ -342,7 +343,6 @@ Public Class Form1
         t.TabButton.IsActive = True
         t.TabButton.Invalidate()
 
-        ' Scroll agar tab aktif terlihat
         Dim tabLeft = index * 160
         Dim tabRight = tabLeft + 160
         If tabLeft < _tabScrollOffset Then
@@ -374,7 +374,7 @@ Public Class Form1
             ElseIf result = DialogResult.Cancel Then
                 Return
             End If
-            ' No = tutup tanpa simpan
+
         End If
 
         TabsPanel.Controls.Remove(t.TabButton)
@@ -383,7 +383,6 @@ Public Class Form1
         _tabs.RemoveAt(index)
 
         If _tabs.Count = 0 Then
-            ' Satu-satunya tab ditutup → tutup program
             Me.Close()
         Else
             _activeIndex = Math.Max(0, Math.Min(index, _tabs.Count - 1))
@@ -430,28 +429,21 @@ Public Class Form1
         End If
     End Function
 
-    ' ─────────────────────────────────────────────
-    '  EDITOR EVENTS
-    ' ─────────────────────────────────────────────
     Private Sub Editor_CaretPositionChanged(ByVal sender As Object, ByVal e As CodeEditorLib.Events.CaretPositionEventArgs)
         UpdateStatusBar()
     End Sub
 
     Private Sub Editor_TextChanged(ByVal sender As Object, ByVal e As EventArgs)
-        ' Abaikan TextChanged saat sedang memuat file agar IsModified tidak salah set
         If _isLoadingFile Then Return
 
-        ' Cari tab yang sesuai dengan editor yang mengirim event (bukan pakai _activeIndex!)
         For i As Integer = 0 To _tabs.Count - 1
             If _tabs(i).Editor Is sender Then
                 If Not _tabs(i).IsModified Then
                     Dim t = _tabs(i)
                     t.IsModified = True
                     _tabs(i) = t
-                    ' Tandai tab button dengan *
                     t.TabButton.IsModified = True
                     t.TabButton.Invalidate()
-                    ' Update title bar hanya jika ini tab yang aktif
                     If i = _activeIndex Then UpdateTitleBar()
                 End If
                 Return
@@ -459,15 +451,11 @@ Public Class Form1
         Next
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  TIMER — polling deteksi perubahan konten editor
-    '  Sebagai fallback jika TextChanged tidak di-raise oleh CodeEditorControl
-    ' ─────────────────────────────────────────────
     Private Sub tmrModifiedCheck_Tick(ByVal sender As Object, ByVal e As EventArgs) Handles tmrModifiedCheck.Tick
         If _isLoadingFile Then Return
         For i As Integer = 0 To _tabs.Count - 1
             Dim t = _tabs(i)
-            If t.IsModified Then Continue For ' sudah ditandai, skip
+            If t.IsModified Then Continue For
 
             Dim currentCode As String = ""
             Try
@@ -477,7 +465,6 @@ Public Class Form1
             End Try
 
             If currentCode <> t.SavedCode Then
-                ' Ada perubahan dari snapshot terakhir — tandai modified
                 t.IsModified = True
                 _tabs(i) = t
                 t.TabButton.IsModified = True
@@ -487,9 +474,6 @@ Public Class Form1
         Next
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  DRAG & DROP
-    ' ─────────────────────────────────────────────
     Private Sub Form1_DragEnter(ByVal sender As Object, ByVal e As DragEventArgs) Handles MyBase.DragEnter,
                                                                                 TabsPanel.DragEnter,
                                                                                 EditorHostPanel.DragEnter
@@ -518,9 +502,27 @@ Public Class Form1
         Next
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  FILE OPERATIONS
-    ' ─────────────────────────────────────────────
+    Private _currentFontSize As Single = 10.0F
+    Private Const MinFontSize As Single = 6.0F
+    Private Const MaxFontSize As Single = 40.0F
+
+    Private Sub Editor_MouseWheel(ByVal sender As Object, ByVal e As MouseEventArgs)
+        If ModifierKeys = Keys.Control Then
+            Dim delta As Single = If(e.Delta > 0, 1.0F, -1.0F)
+            _currentFontSize = Math.Max(MinFontSize, Math.Min(MaxFontSize, _currentFontSize + delta))
+            Dim newFont As New Font("Consolas", _currentFontSize, FontStyle.Regular)
+            For i = 0 To _tabs.Count - 1
+                _tabs(i).Editor.Font = newFont
+            Next
+            UpdateZoomStatus()
+        End If
+    End Sub
+
+    Private Sub UpdateZoomStatus()
+        Dim pct As Integer = CInt(_currentFontSize / 10.0F * 100)
+        ToolStripStatusLabel1.Text = "Zoom: " & pct & "%  (Ctrl+Scroll)"
+    End Sub
+
     Private Sub OpenFileInTab(ByVal filePath As String)
         For i = 0 To _tabs.Count - 1
             If String.Compare(_tabs(i).FilePath, filePath, True) = 0 Then
@@ -545,7 +547,7 @@ Public Class Form1
             Dim content = File.ReadAllText(filePath, DetectEncoding(filePath))
             AddRecentFile(filePath)
 
-            _isLoadingFile = True  ' Mulai load — tandai agar TextChanged tidak trigger IsModified
+            _isLoadingFile = True
             Try
                 If _activeIndex >= 0 Then
                     Dim cur = _tabs(_activeIndex)
@@ -554,7 +556,7 @@ Public Class Form1
                         cur.Editor.Code = content
                         cur.Editor.Language = GetLanguageFromExtension(ext)
                         cur.IsModified = False
-                        cur.SavedCode = cur.Editor.Code  ' ambil dari editor setelah di-set
+                        cur.SavedCode = cur.Editor.Code
                         _tabs(_activeIndex) = cur
                         UpdateTabTitles()
                         UpdateTitleBar()
@@ -564,7 +566,7 @@ Public Class Form1
 
                 NewTab(filePath, content)
             Finally
-                _isLoadingFile = False  ' Selesai load — kembalikan flag
+                _isLoadingFile = False
             End Try
         Catch ex As Exception
             _isLoadingFile = False
@@ -581,7 +583,7 @@ Public Class Form1
         Try
             File.WriteAllText(t.FilePath, t.Editor.Code, New UTF8Encoding(False))
             t.IsModified = False
-            t.SavedCode = t.Editor.Code  ' Update snapshot setelah simpan
+            t.SavedCode = t.Editor.Code
             _tabs(index) = t
             UpdateTabTitles()
             UpdateTitleBar()
@@ -608,7 +610,7 @@ Public Class Form1
                 Try
                     File.WriteAllText(t.FilePath, t.Editor.Code, New UTF8Encoding(False))
                     t.IsModified = False
-                    t.SavedCode = t.Editor.Code  ' Update snapshot setelah simpan
+                    t.SavedCode = t.Editor.Code
                     _tabs(index) = t
                     AddRecentFile(t.FilePath)
                     UpdateTabTitles()
@@ -661,9 +663,27 @@ Public Class Form1
         End Select
     End Function
 
-    ' ─────────────────────────────────────────────
-    '  THEME
-    ' ─────────────────────────────────────────────
+    Private _currentThemeName As String = "Monokai"
+
+    Private Function GetEditorTheme() As Object
+        Select Case _currentThemeName
+            Case "Dark" : Return New DarkTheme()
+            Case "Monokai" : Return New MonokaiTheme()
+            Case "Dracula" : Return New DraculaTheme()
+            Case "Nord" : Return New NordTheme()
+            Case "Solarized Dark" : Return New SolarizedDarkTheme()
+            Case "Solarized Light" : Return New SolarizedLightTheme()
+            Case Else : Return New LightTheme()
+        End Select
+    End Function
+
+    Private Function IsCurrentThemeDark() As Boolean
+        Select Case _currentThemeName
+            Case "Light", "Solarized Light" : Return False
+            Case Else : Return True
+        End Select
+    End Function
+
     Private Sub SetMenuColors(ByVal items As ToolStripItemCollection, ByVal fg As Color)
         For Each item As ToolStripItem In items
             item.ForeColor = fg
@@ -674,6 +694,15 @@ Public Class Form1
     End Sub
 
     Private Sub ApplyTheme()
+        _isDark = IsCurrentThemeDark()
+        DarkToolStripMenuItem.Checked = (_currentThemeName = "Dark")
+        LightToolStripMenuItem.Checked = (_currentThemeName = "Light")
+        MonokaiToolStripMenuItem.Checked = (_currentThemeName = "Monokai")
+        DraculaToolStripMenuItem.Checked = (_currentThemeName = "Dracula")
+        NordToolStripMenuItem.Checked = (_currentThemeName = "Nord")
+        SolarizedDarkToolStripMenuItem.Checked = (_currentThemeName = "Solarized Dark")
+        SolarizedLightToolStripMenuItem.Checked = (_currentThemeName = "Solarized Light")
+
         If _isDark Then
             Me.BackColor = Color.FromArgb(30, 30, 30)
             TabsPanel.BackColor = Color.FromArgb(37, 37, 38)
@@ -693,6 +722,25 @@ Public Class Form1
             bOpen.ForeColor = Color.FromArgb(200, 200, 200)
             bSave.ForeColor = Color.FromArgb(200, 200, 200)
             bFind.ForeColor = Color.FromArgb(200, 200, 200)
+
+            FindPanel.BackColor = Color.FromArgb(37, 37, 38)
+            lblFindFind.ForeColor = Color.FromArgb(200, 200, 200)
+            lblFindFind.BackColor = Color.Transparent
+            lblFindReplace.ForeColor = Color.FromArgb(200, 200, 200)
+            lblFindReplace.BackColor = Color.Transparent
+            txtFind.BackColor = Color.FromArgb(50, 50, 52)
+            txtFind.ForeColor = Color.FromArgb(220, 220, 220)
+            txtReplace.BackColor = Color.FromArgb(50, 50, 52)
+            txtReplace.ForeColor = Color.FromArgb(220, 220, 220)
+            chkCaseSensitive.ForeColor = Color.FromArgb(200, 200, 200)
+            chkCaseSensitive.BackColor = Color.Transparent
+            lblFindStatus.ForeColor = Color.FromArgb(160, 210, 160)
+            lblFindStatus.BackColor = Color.Transparent
+            StyleFlatButton(btnFindPrev, Color.FromArgb(60, 60, 65), Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 90))
+            StyleFlatButton(btnFindNext, Color.FromArgb(60, 60, 65), Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 90))
+            StyleFlatButton(btnReplace, Color.FromArgb(60, 60, 65), Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 90))
+            StyleFlatButton(btnReplaceAll, Color.FromArgb(60, 60, 65), Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 90))
+            StyleFlatButton(btnCloseFindPanel, Color.FromArgb(50, 50, 52), Color.FromArgb(180, 180, 180), Color.FromArgb(180, 60, 60))
         Else
             Me.BackColor = Color.FromArgb(240, 240, 240)
             TabsPanel.BackColor = Color.FromArgb(213, 213, 213)
@@ -712,16 +760,50 @@ Public Class Form1
             bOpen.ForeColor = Color.FromArgb(50, 50, 50)
             bSave.ForeColor = Color.FromArgb(50, 50, 50)
             bFind.ForeColor = Color.FromArgb(50, 50, 50)
+
+            FindPanel.BackColor = Color.FromArgb(230, 230, 235)
+            lblFindFind.ForeColor = Color.FromArgb(40, 40, 40)
+            lblFindFind.BackColor = Color.Transparent
+            lblFindReplace.ForeColor = Color.FromArgb(40, 40, 40)
+            lblFindReplace.BackColor = Color.Transparent
+            txtFind.BackColor = Color.White
+            txtFind.ForeColor = Color.Black
+            txtReplace.BackColor = Color.White
+            txtReplace.ForeColor = Color.Black
+            chkCaseSensitive.ForeColor = Color.FromArgb(40, 40, 40)
+            chkCaseSensitive.BackColor = Color.Transparent
+            lblFindStatus.ForeColor = Color.FromArgb(0, 100, 0)
+            lblFindStatus.BackColor = Color.Transparent
+            StyleFlatButton(btnFindPrev, Color.FromArgb(200, 200, 205), Color.FromArgb(40, 40, 40), Color.FromArgb(170, 170, 180))
+            StyleFlatButton(btnFindNext, Color.FromArgb(200, 200, 205), Color.FromArgb(40, 40, 40), Color.FromArgb(170, 170, 180))
+            StyleFlatButton(btnReplace, Color.FromArgb(200, 200, 205), Color.FromArgb(40, 40, 40), Color.FromArgb(170, 170, 180))
+            StyleFlatButton(btnReplaceAll, Color.FromArgb(200, 200, 205), Color.FromArgb(40, 40, 40), Color.FromArgb(170, 170, 180))
+            StyleFlatButton(btnCloseFindPanel, Color.FromArgb(215, 215, 220), Color.FromArgb(60, 60, 60), Color.FromArgb(200, 80, 80))
         End If
+
         For i = 0 To _tabs.Count - 1
-            _tabs(i).Editor.Theme = If(_isDark, CType(New DarkTheme(), Object), New LightTheme())
+            _tabs(i).Editor.Theme = GetEditorTheme()
         Next
+
+        UpdateTabButtonsTheme()
         UpdateTabTitles()
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  STATUS & TITLE
-    ' ─────────────────────────────────────────────
+    Private Sub StyleFlatButton(ByVal btn As Button, ByVal bg As Color, ByVal fg As Color, ByVal border As Color)
+        btn.BackColor = bg
+        btn.ForeColor = fg
+        btn.FlatStyle = FlatStyle.Flat
+        btn.FlatAppearance.BorderColor = border
+        btn.FlatAppearance.BorderSize = 1
+    End Sub
+
+    Private Sub UpdateTabButtonsTheme()
+        For i = 0 To _tabs.Count - 1
+            _tabs(i).TabButton.IsDarkTheme = _isDark
+            _tabs(i).TabButton.Invalidate()
+        Next
+    End Sub
+
     Private Sub UpdateStatusBar()
         Dim L = LanguageManager.Instance
         If _activeIndex < 0 OrElse _activeIndex >= _tabs.Count Then
@@ -747,9 +829,6 @@ Public Class Form1
         Me.Text = modified & name & " - CE++"
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  RECENT FILES
-    ' ─────────────────────────────────────────────
     Private ReadOnly _recentFilesPath As String =
         Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CE++"), "recent.txt")
 
@@ -815,16 +894,12 @@ Public Class Form1
         End If
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  FIND & REPLACE
-    ' ─────────────────────────────────────────────
     Private Sub ToggleFindPanel()
         FindPanel.Visible = Not FindPanel.Visible
         If FindPanel.Visible Then
             txtFind.Focus()
             If _activeIndex >= 0 Then
-                ' SelectedText not available; skip pre-fill''
-                ' If sel <> "" Then txtFind.Text = sel
+               
             End If
         End If
     End Sub
@@ -858,7 +933,6 @@ Public Class Form1
         End If
         If idx >= 0 Then
             _findPos = idx
-            ' Navigate to found line
             Dim lineNum As Integer = code.Substring(0, idx).Split(vbLf.ToCharArray())(0).Split(vbLf.ToCharArray()).Length
             Dim newlineCount As Integer = 0
             For Each ch As Char In code.Substring(0, idx)
@@ -923,24 +997,12 @@ Public Class Form1
         If e.KeyCode = Keys.Escape Then FindPanel.Visible = False
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  GOTO LINE
-    ' ─────────────────────────────────────────────
     Private Sub GoToLine()
-        Dim L = LanguageManager.Instance
-        Dim input = InputBox(L.Dlg("GoToLinePrompt"), L.Dlg("GoToLineTitle"), "1")
-        Dim lineNum As Integer
-        If Integer.TryParse(input, lineNum) AndAlso _activeIndex >= 0 Then
-            Try
-                _tabs(_activeIndex).Editor.GoToLine(lineNum)
-            Catch
-            End Try
+        If _activeIndex >= 0 Then
+            _tabs(_activeIndex).Editor.ShowGotoDialog()
         End If
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  KEYBOARD SHORTCUTS
-    ' ─────────────────────────────────────────────
     Protected Overrides Function ProcessCmdKey(ByRef msg As Message, ByVal keyData As Keys) As Boolean
         Select Case keyData
             Case Keys.Control Or Keys.N
@@ -968,9 +1030,6 @@ Public Class Form1
         Return MyBase.ProcessCmdKey(msg, keyData)
     End Function
 
-    ' ─────────────────────────────────────────────
-    '  MENU — FILE
-    ' ─────────────────────────────────────────────
     Private Sub NewFileToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles NewFileToolStripMenuItem.Click
         NewTab()
     End Sub
@@ -1011,11 +1070,9 @@ Public Class Form1
     End Sub
 
     Private Sub CloseAllToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles CloseAllToolStripMenuItem.Click
-        ' Selalu tutup tab pertama karena index berubah setelah setiap close
         Do While _tabs.Count > 0
             Dim countBefore = _tabs.Count
             CloseTab(0)
-            ' Jika user tekan Cancel pada dialog simpan, hentikan loop
             If _tabs.Count = countBefore Then Return
         Loop
     End Sub
@@ -1024,9 +1081,6 @@ Public Class Form1
         Me.Close()
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  MENU — EDIT
-    ' ─────────────────────────────────────────────
     Private Sub UndoToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles UndoToolStripMenuItem.Click
         If _activeIndex >= 0 Then _tabs(_activeIndex).Editor.Undo()
     End Sub
@@ -1055,9 +1109,6 @@ Public Class Form1
         GoToLine()
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  MENU — VIEW
-    ' ─────────────────────────────────────────────
     Private Sub WordWrapToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles WordWrapToolStripMenuItem.Click
         If _activeIndex >= 0 Then
             Dim ww = Not _tabs(_activeIndex).Editor.WordWrap
@@ -1073,9 +1124,14 @@ Public Class Form1
         ShowLineNumbersToolStripMenuItem.Checked = show
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  MENU — LANGUAGE
-    ' ─────────────────────────────────────────────
+    Private Sub ShowMinimapToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles ShowMinimapToolStripMenuItem.Click
+        Dim show = Not ShowMinimapToolStripMenuItem.Checked
+        ShowMinimapToolStripMenuItem.Checked = show
+        For i = 0 To _tabs.Count - 1
+            _tabs(i).Editor.ShowMinimap = show
+        Next
+    End Sub
+
     Private Sub SetLanguage(ByVal lang As Object)
         If _activeIndex >= 0 Then _tabs(_activeIndex).Editor.Language = lang
     End Sub
@@ -1122,25 +1178,33 @@ Public Class Form1
         SetLanguage(Nothing)
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  MENU — THEMES
-    ' ─────────────────────────────────────────────
-    Private Sub DarkToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles DarkToolStripMenuItem.Click
-        _isDark = True
+    Private Sub ApplyThemeByName(ByVal name As String)
+        _currentThemeName = name
         ApplyTheme()
-        LightToolStripMenuItem.Checked = False
-        DarkToolStripMenuItem.Checked = True
-    End Sub
-    Private Sub LightToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles LightToolStripMenuItem.Click
-        _isDark = False
-        ApplyTheme()
-        LightToolStripMenuItem.Checked = True
-        DarkToolStripMenuItem.Checked = False
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  MENU — HELP
-    ' ─────────────────────────────────────────────
+    Private Sub DarkToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles DarkToolStripMenuItem.Click
+        ApplyThemeByName("Dark")
+    End Sub
+    Private Sub LightToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles LightToolStripMenuItem.Click
+        ApplyThemeByName("Light")
+    End Sub
+    Private Sub MonokaiToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles MonokaiToolStripMenuItem.Click
+        ApplyThemeByName("Monokai")
+    End Sub
+    Private Sub DraculaToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles DraculaToolStripMenuItem.Click
+        ApplyThemeByName("Dracula")
+    End Sub
+    Private Sub NordToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles NordToolStripMenuItem.Click
+        ApplyThemeByName("Nord")
+    End Sub
+    Private Sub SolarizedDarkToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles SolarizedDarkToolStripMenuItem.Click
+        ApplyThemeByName("Solarized Dark")
+    End Sub
+    Private Sub SolarizedLightToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles SolarizedLightToolStripMenuItem.Click
+        ApplyThemeByName("Solarized Light")
+    End Sub
+
     Private Sub AboutToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles AboutToolStripMenuItem.Click
         frmAbout.ShowDialog()
     End Sub
@@ -1170,27 +1234,20 @@ Public Class Form1
         RepositionTabs()
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  TOOLBAR
-    ' ─────────────────────────────────────────────
     Private Sub btnNew_Click(ByVal s As Object, ByVal e As EventArgs)
-
+        NewTab()
     End Sub
     Private Sub btnOpen_Click(ByVal s As Object, ByVal e As EventArgs)
-
+        OpenFileDialog_Open()
     End Sub
     Private Sub btnSave_Click(ByVal s As Object, ByVal e As EventArgs)
-
+        If _activeIndex >= 0 Then SaveTab(_activeIndex)
     End Sub
     Private Sub btnFind_Click(ByVal s As Object, ByVal e As EventArgs)
-
+        ToggleFindPanel()
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  FORM CLOSING
-    ' ─────────────────────────────────────────────
     Private Sub Form1_FormClosing(ByVal s As Object, ByVal e As FormClosingEventArgs) Handles MyBase.FormClosing
-        ' Kumpulkan semua tab yang belum disimpan
         Dim unsavedNames As New List(Of String)
         For Each tc As EditorTab In _tabs
             If tc.IsModified Then
@@ -1198,9 +1255,8 @@ Public Class Form1
             End If
         Next
 
-        If unsavedNames.Count = 0 Then Return ' Tidak ada yang belum disimpan, langsung keluar
+        If unsavedNames.Count = 0 Then Return
 
-        ' Buat pesan daftar file
         Dim L = LanguageManager.Instance
         Dim fileList As String = String.Join(vbCrLf, unsavedNames.ToArray())
         Dim msg As String = L.Dlg("UnsavedOnExit", vbCrLf, fileList)
@@ -1212,21 +1268,17 @@ Public Class Form1
             MessageBoxIcon.Warning)
 
         If result = DialogResult.Yes Then
-            ' Simpan semua yang belum disimpan
             For i As Integer = 0 To _tabs.Count - 1
                 If _tabs(i).IsModified Then
                     If Not SaveTab(i) Then
-                        ' Jika save gagal (misal user cancel SaveAs), batalkan keluar
                         e.Cancel = True
                         Return
                     End If
                 End If
             Next
         ElseIf result = DialogResult.No Then
-            ' Lewati / keluar tanpa simpan
-            ' Biarkan program keluar
+           
         Else
-            ' Cancel → batalkan keluar
             e.Cancel = True
         End If
     End Sub
@@ -1260,15 +1312,8 @@ Public Class Form1
         bOpen.Image = My.Resources.file1
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  COMMAND LINE / SINGLE INSTANCE
-    ' ─────────────────────────────────────────────
-
-    ' Dipanggil saat startup pertama: buka file yang dikirim lewat command line.
-    ' Contoh: user double-klik main.py di Explorer → CE++.exe "main.py"
     Private Sub HandleCommandLineArgs()
         Dim args() As String = Environment.GetCommandLineArgs()
-        ' args(0) adalah path EXE itu sendiri, lewati
         For i As Integer = 1 To args.Length - 1
             Dim path As String = args(i)
             If IO.File.Exists(path) Then
@@ -1277,17 +1322,13 @@ Public Class Form1
         Next
     End Sub
 
-    ' Dipanggil dari Application.Designer.vb (OnStartupNextInstance) ketika
-    ' program sudah berjalan dan user double-klik file lain di Explorer.
-    ' File dibuka di tab baru; jika sudah terbuka, aktifkan tab-nya saja.
     Public Sub OpenFileFromArgs(ByVal filePath As String)
         If Me.InvokeRequired Then
-            ' OnStartupNextInstance bisa berjalan di thread berbeda —
-            ' pastikan semua operasi UI dilakukan di UI thread.
             Me.Invoke(New Action(Of String)(AddressOf OpenFileFromArgs), filePath)
             Return
         End If
         OpenFileInTab(filePath)
     End Sub
 
+   
 End Class

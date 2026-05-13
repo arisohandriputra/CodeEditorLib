@@ -22,6 +22,9 @@ Partial Class frmAbout
         Me.PictureBox2 = New System.Windows.Forms.PictureBox()
         Me.lblTagline = New System.Windows.Forms.Label()
         Me.pnlBody = New System.Windows.Forms.Panel()
+        Me.LinkLabel2 = New System.Windows.Forms.LinkLabel()
+        Me.PictureBox3 = New System.Windows.Forms.PictureBox()
+        Me.lbBanner = New System.Windows.Forms.Label()
         Me.Label2 = New System.Windows.Forms.Label()
         Me.LinkLabel1 = New System.Windows.Forms.LinkLabel()
         Me.Label1 = New System.Windows.Forms.Label()
@@ -34,15 +37,12 @@ Partial Class frmAbout
         Me.pnlFooter = New System.Windows.Forms.Panel()
         Me.btnOK = New System.Windows.Forms.Button()
         Me.lnkLicense = New System.Windows.Forms.LinkLabel()
-        Me.lbBanner = New System.Windows.Forms.Label()
-        Me.PictureBox3 = New System.Windows.Forms.PictureBox()
-        Me.LinkLabel2 = New System.Windows.Forms.LinkLabel()
         Me.pnlHeader.SuspendLayout()
         CType(Me.PictureBox2, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.pnlBody.SuspendLayout()
+        CType(Me.PictureBox3, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.PictureBox1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.pnlFooter.SuspendLayout()
-        CType(Me.PictureBox3, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'pnlHeader
@@ -67,7 +67,7 @@ Partial Class frmAbout
         Me.lblVersion.Name = "lblVersion"
         Me.lblVersion.Size = New System.Drawing.Size(28, 15)
         Me.lblVersion.TabIndex = 1
-        Me.lblVersion.Text = "v1.0"
+        Me.lblVersion.Text = "v1.1"
         '
         'PictureBox2
         '
@@ -111,6 +111,38 @@ Partial Class frmAbout
         Me.pnlBody.Padding = New System.Windows.Forms.Padding(14, 9, 14, 3)
         Me.pnlBody.Size = New System.Drawing.Size(307, 273)
         Me.pnlBody.TabIndex = 0
+        '
+        'LinkLabel2
+        '
+        Me.LinkLabel2.AutoSize = True
+        Me.LinkLabel2.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.LinkLabel2.Location = New System.Drawing.Point(143, 134)
+        Me.LinkLabel2.Name = "LinkLabel2"
+        Me.LinkLabel2.Size = New System.Drawing.Size(116, 15)
+        Me.LinkLabel2.TabIndex = 13
+        Me.LinkLabel2.TabStop = True
+        Me.LinkLabel2.Text = "https://kalaweit.org/"
+        '
+        'PictureBox3
+        '
+        Me.PictureBox3.Image = Global.CE__.My.Resources.Resources.kalaweit
+        Me.PictureBox3.Location = New System.Drawing.Point(12, 79)
+        Me.PictureBox3.Name = "PictureBox3"
+        Me.PictureBox3.Size = New System.Drawing.Size(125, 74)
+        Me.PictureBox3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom
+        Me.PictureBox3.TabIndex = 12
+        Me.PictureBox3.TabStop = False
+        '
+        'lbBanner
+        '
+        Me.lbBanner.Font = New System.Drawing.Font("Segoe UI", 9.75!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Italic), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lbBanner.ForeColor = System.Drawing.Color.FromArgb(CType(CType(255, Byte), Integer), CType(CType(128, Byte), Integer), CType(CType(0, Byte), Integer))
+        Me.lbBanner.Location = New System.Drawing.Point(143, 79)
+        Me.lbBanner.Name = "lbBanner"
+        Me.lbBanner.Size = New System.Drawing.Size(152, 55)
+        Me.lbBanner.TabIndex = 11
+        Me.lbBanner.Text = "Stand Against Deforestation"
+        Me.lbBanner.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
         '
         'Label2
         '
@@ -238,38 +270,6 @@ Partial Class frmAbout
         Me.lnkLicense.TabStop = True
         Me.lnkLicense.Text = "MIT License"
         '
-        'lbBanner
-        '
-        Me.lbBanner.Font = New System.Drawing.Font("Segoe UI", 9.75!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Italic), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lbBanner.ForeColor = System.Drawing.Color.FromArgb(CType(CType(255, Byte), Integer), CType(CType(128, Byte), Integer), CType(CType(0, Byte), Integer))
-        Me.lbBanner.Location = New System.Drawing.Point(143, 79)
-        Me.lbBanner.Name = "lbBanner"
-        Me.lbBanner.Size = New System.Drawing.Size(152, 55)
-        Me.lbBanner.TabIndex = 11
-        Me.lbBanner.Text = "Stand Against Deforestation"
-        Me.lbBanner.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-        '
-        'PictureBox3
-        '
-        Me.PictureBox3.Image = Global.CE__.My.Resources.Resources.kalaweit
-        Me.PictureBox3.Location = New System.Drawing.Point(12, 79)
-        Me.PictureBox3.Name = "PictureBox3"
-        Me.PictureBox3.Size = New System.Drawing.Size(125, 74)
-        Me.PictureBox3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom
-        Me.PictureBox3.TabIndex = 12
-        Me.PictureBox3.TabStop = False
-        '
-        'LinkLabel2
-        '
-        Me.LinkLabel2.AutoSize = True
-        Me.LinkLabel2.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.LinkLabel2.Location = New System.Drawing.Point(143, 134)
-        Me.LinkLabel2.Name = "LinkLabel2"
-        Me.LinkLabel2.Size = New System.Drawing.Size(116, 15)
-        Me.LinkLabel2.TabIndex = 13
-        Me.LinkLabel2.TabStop = True
-        Me.LinkLabel2.Text = "https://kalaweit.org/"
-        '
         'frmAbout
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -292,10 +292,10 @@ Partial Class frmAbout
         CType(Me.PictureBox2, System.ComponentModel.ISupportInitialize).EndInit()
         Me.pnlBody.ResumeLayout(False)
         Me.pnlBody.PerformLayout()
+        CType(Me.PictureBox3, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.PictureBox1, System.ComponentModel.ISupportInitialize).EndInit()
         Me.pnlFooter.ResumeLayout(False)
         Me.pnlFooter.PerformLayout()
-        CType(Me.PictureBox3, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
 
     End Sub

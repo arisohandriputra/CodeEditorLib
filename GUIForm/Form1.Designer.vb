@@ -66,6 +66,12 @@ Partial Class Form1
         Me.ThemesToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.DarkToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.LightToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MonokaiToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.DraculaToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.NordToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.SolarizedDarkToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.SolarizedLightToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ShowMinimapToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.UILanguageToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.HelpToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.KeyboardShortcutsToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
@@ -104,6 +110,7 @@ Partial Class Form1
         Me.btnScrollLeft = New System.Windows.Forms.Button()
         Me.btnScrollRight = New System.Windows.Forms.Button()
         Me.tmrModifiedCheck = New System.Windows.Forms.Timer(Me.components)
+        Me.NewToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuStrip1.SuspendLayout()
         Me.ToolBarPanel.SuspendLayout()
         Me.ToolStrip1.SuspendLayout()
@@ -287,7 +294,7 @@ Partial Class Form1
         '
         'ViewToolStripMenuItem
         '
-        Me.ViewToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.WordWrapToolStripMenuItem, Me.ShowLineNumbersToolStripMenuItem})
+        Me.ViewToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.WordWrapToolStripMenuItem, Me.ShowLineNumbersToolStripMenuItem, Me.ShowMinimapToolStripMenuItem})
         Me.ViewToolStripMenuItem.ForeColor = System.Drawing.Color.Black
         Me.ViewToolStripMenuItem.Name = "ViewToolStripMenuItem"
         Me.ViewToolStripMenuItem.Size = New System.Drawing.Size(44, 20)
@@ -306,6 +313,14 @@ Partial Class Form1
         Me.ShowLineNumbersToolStripMenuItem.Name = "ShowLineNumbersToolStripMenuItem"
         Me.ShowLineNumbersToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
         Me.ShowLineNumbersToolStripMenuItem.Text = "Show &Line Numbers"
+        '
+        'ShowMinimapToolStripMenuItem
+        '
+        Me.ShowMinimapToolStripMenuItem.Checked = True
+        Me.ShowMinimapToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.ShowMinimapToolStripMenuItem.Name = "ShowMinimapToolStripMenuItem"
+        Me.ShowMinimapToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
+        Me.ShowMinimapToolStripMenuItem.Text = "Show &Minimap"
         '
         'LanguageToolStripMenuItem
         '
@@ -401,25 +416,55 @@ Partial Class Form1
         '
         'ThemesToolStripMenuItem
         '
-        Me.ThemesToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.DarkToolStripMenuItem, Me.LightToolStripMenuItem})
+        Me.ThemesToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.LightToolStripMenuItem, Me.DarkToolStripMenuItem, New System.Windows.Forms.ToolStripSeparator(), Me.MonokaiToolStripMenuItem, Me.DraculaToolStripMenuItem, Me.NordToolStripMenuItem, New System.Windows.Forms.ToolStripSeparator(), Me.SolarizedDarkToolStripMenuItem, Me.SolarizedLightToolStripMenuItem})
         Me.ThemesToolStripMenuItem.ForeColor = System.Drawing.Color.Black
         Me.ThemesToolStripMenuItem.Name = "ThemesToolStripMenuItem"
         Me.ThemesToolStripMenuItem.Size = New System.Drawing.Size(60, 20)
         Me.ThemesToolStripMenuItem.Text = "&Themes"
         '
-        'DarkToolStripMenuItem
-        '
-        Me.DarkToolStripMenuItem.Checked = True
-        Me.DarkToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.DarkToolStripMenuItem.Name = "DarkToolStripMenuItem"
-        Me.DarkToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
-        Me.DarkToolStripMenuItem.Text = "Dark"
-        '
         'LightToolStripMenuItem
         '
+        Me.LightToolStripMenuItem.Checked = True
+        Me.LightToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked
         Me.LightToolStripMenuItem.Name = "LightToolStripMenuItem"
-        Me.LightToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
+        Me.LightToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
         Me.LightToolStripMenuItem.Text = "Light"
+        '
+        'DarkToolStripMenuItem
+        '
+        Me.DarkToolStripMenuItem.Name = "DarkToolStripMenuItem"
+        Me.DarkToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.DarkToolStripMenuItem.Text = "Dark"
+        '
+        'MonokaiToolStripMenuItem
+        '
+        Me.MonokaiToolStripMenuItem.Name = "MonokaiToolStripMenuItem"
+        Me.MonokaiToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.MonokaiToolStripMenuItem.Text = "Monokai"
+        '
+        'DraculaToolStripMenuItem
+        '
+        Me.DraculaToolStripMenuItem.Name = "DraculaToolStripMenuItem"
+        Me.DraculaToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.DraculaToolStripMenuItem.Text = "Dracula"
+        '
+        'NordToolStripMenuItem
+        '
+        Me.NordToolStripMenuItem.Name = "NordToolStripMenuItem"
+        Me.NordToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.NordToolStripMenuItem.Text = "Nord"
+        '
+        'SolarizedDarkToolStripMenuItem
+        '
+        Me.SolarizedDarkToolStripMenuItem.Name = "SolarizedDarkToolStripMenuItem"
+        Me.SolarizedDarkToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.SolarizedDarkToolStripMenuItem.Text = "Solarized Dark"
+        '
+        'SolarizedLightToolStripMenuItem
+        '
+        Me.SolarizedLightToolStripMenuItem.Name = "SolarizedLightToolStripMenuItem"
+        Me.SolarizedLightToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.SolarizedLightToolStripMenuItem.Text = "Solarized Light"
         '
         'UILanguageToolStripMenuItem
         '
@@ -802,6 +847,12 @@ Partial Class Form1
         Me.tmrModifiedCheck.Enabled = True
         Me.tmrModifiedCheck.Interval = 400
         '
+        'NewToolStripMenuItem
+        '
+        Me.NewToolStripMenuItem.Name = "NewToolStripMenuItem"
+        Me.NewToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
+        Me.NewToolStripMenuItem.Text = "New"
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -1015,6 +1066,12 @@ Partial Class Form1
     Friend WithEvents ThemesToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents DarkToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents LightToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents MonokaiToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents DraculaToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents NordToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents SolarizedDarkToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents SolarizedLightToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents ShowMinimapToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
 
     Friend WithEvents HelpToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents KeyboardShortcutsToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
@@ -1052,5 +1109,6 @@ Partial Class Form1
     Friend WithEvents bSave As System.Windows.Forms.ToolStripButton
     Friend WithEvents ToolStripSeparator2 As System.Windows.Forms.ToolStripSeparator
     Friend WithEvents bFind As System.Windows.Forms.ToolStripButton
+    Friend WithEvents NewToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
 
 End Class

@@ -3,19 +3,8 @@ Imports System.Collections.Generic
 Imports System.Windows.Forms
 Imports System.Threading
 
-''' <summary>
-''' Manages UI localization for CE++.
-''' Language files are plain INI files stored in the "Languages" subfolder
-''' next to the executable (e.g. Languages\en.ini, Languages\id.ini).
-''' Adding a new language is as simple as dropping a new .ini file in that folder;
-''' the Language menu in the main form will pick it up automatically on next launch
-''' (or after calling RefreshLanguageMenu).
-''' </summary>
 Public Class LanguageManager
 
-    ' ─────────────────────────────────────────────
-    '  Singleton
-    ' ─────────────────────────────────────────────
     Private Shared _instance As LanguageManager
     Public Shared ReadOnly Property Instance As LanguageManager
         Get
@@ -24,29 +13,22 @@ Public Class LanguageManager
         End Get
     End Property
 
-    ' ─────────────────────────────────────────────
-    '  Internal state
-    ' ─────────────────────────────────────────────
+  
     Private _strings As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
     Private _currentCode As String = "en"
 
-    ''' <summary>Folder that contains all language .ini files.</summary>
     Public ReadOnly Property LanguagesFolder As String
         Get
             Return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Languages")
         End Get
     End Property
 
-    ''' <summary>Currently active language code (e.g. "en", "id").</summary>
     Public ReadOnly Property CurrentCode As String
         Get
             Return _currentCode
         End Get
     End Property
 
-    ' ─────────────────────────────────────────────
-    '  Bootstrap
-    ' ─────────────────────────────────────────────
     Private Sub New()
 
         Dim lang As String = My.Settings.lang
@@ -61,11 +43,6 @@ Public Class LanguageManager
 
     End Sub
 
-    ''' <summary>
-    ''' Load a language by its code.  The file must exist at
-    ''' Languages\{code}.ini (case-insensitive on Windows).
-    ''' Returns True on success, False if the file was not found.
-    ''' </summary>
     Public Function Load(ByVal code As String) As Boolean
         Dim filePath As String = Path.Combine(LanguagesFolder, code.ToLower() & ".ini")
         If Not File.Exists(filePath) Then Return False
@@ -86,30 +63,22 @@ Public Class LanguageManager
             Dim eqIndex = trimmed.IndexOf("="c)
             If eqIndex > 0 Then
                 Dim key = currentSection & "." & trimmed.Substring(0, eqIndex).Trim()
-                Dim value = trimmed.Substring(eqIndex + 1) ' keep original (don't Trim value)
-                ' Unescape \n → vbCrLf and {N} placeholders are left for String.Format
+                Dim value = trimmed.Substring(eqIndex + 1)
+
                 _strings(key) = value
             End If
         Next
         Return True
     End Function
 
-    ' ─────────────────────────────────────────────
-    '  String retrieval
-    ' ─────────────────────────────────────────────
-
-    ''' <summary>
-    ''' Get a localised string by section.key.
-    ''' Falls back to the key itself if not found so the UI never shows blanks.
-    ''' </summary>
+  
     Public Function GetString(ByVal section As String, ByVal key As String) As String
         Dim fullKey = section & "." & key
         Dim value As String = Nothing
         If _strings.TryGetValue(fullKey, value) Then Return value
-        Return "[" & fullKey & "]"   ' visible placeholder so missing keys are obvious
+        Return "[" & fullKey & "]"
     End Function
 
-    ''' <summary>Shorthand – formats the value with String.Format.</summary>
     Public Function GetString(ByVal section As String, ByVal key As String,
                               ByVal ParamArray args() As Object) As String
         Dim raw = GetString(section, key)
@@ -120,7 +89,6 @@ Public Class LanguageManager
         End Try
     End Function
 
-    ' Convenience aliases (avoids repeating section names everywhere)
     Public Function Menu(ByVal key As String) As String
         Return GetString("Menu", key)
     End Function
@@ -155,14 +123,6 @@ Public Class LanguageManager
         Return GetString("About", key, args)
     End Function
 
-    ' ─────────────────────────────────────────────
-    '  Language discovery
-    ' ─────────────────────────────────────────────
-
-    ''' <summary>
-    ''' Returns info about every language file found in the Languages folder.
-    ''' Each entry is (Code, DisplayName) e.g. ("en", "English").
-    ''' </summary>
     Public Function GetAvailableLanguages() As List(Of LanguageInfo)
         Dim result As New List(Of LanguageInfo)
         If Not Directory.Exists(LanguagesFolder) Then Return result
@@ -173,12 +133,10 @@ Public Class LanguageManager
             If name = "" Then name = code.ToUpper()
             result.Add(New LanguageInfo(code, name))
         Next
-        ' Sort: English first, then alphabetically
         result.Sort(New LanguageInfoComparer())
         Return result
     End Function
 
-    ''' <summary>Read a single value from [Meta] without loading the whole file.</summary>
     Private Function ReadMetaValue(ByVal filePath As String, ByVal metaKey As String) As String
         Dim inMeta As Boolean = False
         For Each line As String In File.ReadAllLines(filePath, System.Text.Encoding.UTF8)
@@ -195,22 +153,13 @@ Public Class LanguageManager
         Return ""
     End Function
 
-    ' ─────────────────────────────────────────────
-    '  Dynamic menu builder
-    ' ─────────────────────────────────────────────
-
-    ''' <summary>
-    ''' Builds (or rebuilds) the UI-Language submenu inside <paramref name="parentItem"/>.
-    ''' Call this once in Form_Load and again whenever the Languages folder changes.
-    ''' The currently active language gets a check-mark.
-    ''' </summary>
     Public Sub BuildLanguageMenu(ByVal parentItem As ToolStripMenuItem,
                                  ByVal onSelected As Action(Of String))
         parentItem.Text = LangMenu("MenuTitle")
         parentItem.DropDownItems.Clear()
 
         For Each lang In GetAvailableLanguages()
-            Dim langCopy = lang   ' capture for closure
+            Dim langCopy = lang
             Dim item As New ToolStripMenuItem(lang.DisplayName) With {
                 .Tag = lang.Code,
                 .Checked = (lang.Code = _currentCode)
@@ -224,10 +173,8 @@ Public Class LanguageManager
                                        My.Settings.lang = langCopy.Code.ToLower()
                                        My.Settings.Save()
 
-                                       ' Small delay for .NET 2.0 settings flush
                                        Thread.Sleep(300)
 
-                                       ' Restart app manually
                                        Process.Start(Application.ExecutablePath)
 
                                        Application.Exit()
@@ -239,7 +186,6 @@ Public Class LanguageManager
         Next
     End Sub
 
-    ''' <summary>Updates check-marks in the language menu after a language switch.</summary>
     Public Sub SyncLanguageMenuChecks(ByVal parentItem As ToolStripMenuItem)
         For Each item As ToolStripItem In parentItem.DropDownItems
             If TypeOf item Is ToolStripMenuItem Then
@@ -249,9 +195,6 @@ Public Class LanguageManager
         Next
     End Sub
 
-    ' ─────────────────────────────────────────────
-    '  File-filter helper (assembles one string)
-    ' ─────────────────────────────────────────────
     Public Function BuildFileFilter() As String
         Return FileFilter("AllSupported") & "|" &
                FileFilter("CSharpFiles") & "|" &
@@ -274,7 +217,6 @@ Public Class LanguageManager
 
 End Class
 
-''' <summary>Lightweight record for a discovered language.</summary>
 Public Class LanguageInfo
     Private _code As String
     Private _displayName As String
@@ -297,7 +239,6 @@ Public Class LanguageInfo
     End Sub
 End Class
 
-''' <summary>Sorts languages: English first, then alphabetically by display name.</summary>
 Public Class LanguageInfoComparer
     Implements IComparer(Of LanguageInfo)
 

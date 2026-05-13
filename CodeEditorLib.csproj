@@ -87,7 +87,19 @@
     <Compile Include="Themes\EditorTheme.cs" />
     <Compile Include="Themes\DarkTheme.cs" />
     <Compile Include="Themes\LightTheme.cs" />
+    <Compile Include="Themes\MonokaiTheme.cs" />
+    <Compile Include="Themes\SolarizedDarkTheme.cs" />
+    <Compile Include="Themes\SolarizedLightTheme.cs" />
+    <Compile Include="Themes\NordTheme.cs" />
+    <Compile Include="Themes\DraculaTheme.cs" />
+    <Compile Include="Themes\ThemeRegistry.cs" />
     <Compile Include="Events\CodeEditorEventArgs.cs" />
+    <Compile Include="Controls\GoToLineDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Controls\MinimapPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\LineNumberPanel.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -115,6 +127,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Controls\CodeEditorControl.resx">
       <DependentUpon>CodeEditorControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\GoToLineDialog.resx">
+      <DependentUpon>GoToLineDialog.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

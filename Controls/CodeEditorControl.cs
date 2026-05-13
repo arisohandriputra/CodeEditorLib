@@ -1,3 +1,54 @@
+// =============================================================================
+//  CodeEditorLib 1.1
+//  Windows Forms code editor component for .NET
+// =============================================================================
+//
+//  Description :
+//  CodeEditorLib is a lightweight and customizable code editor control
+//  designed for Windows Forms applications.
+//
+//  Main Features:
+//  - Syntax highlighting
+//  - Line numbers
+//  - Minimap panel
+//  - Undo / Redo system
+//  - Auto indentation
+//  - Auto bracket completion
+//  - Find & Replace dialog
+//  - Go To Line dialog
+//  - Theme support
+//  - Multiple language definitions
+//
+// -----------------------------------------------------------------------------
+//
+//  Author      : Ari Sohandri Putra
+//  Repository  : https://github.com/arisohandriputra/CodeEditorLib
+//  License     : MIT License
+//  Copyright   : Copyright (c) 2026 Ari Sohandri Putra
+//
+// -----------------------------------------------------------------------------
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+//  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+//  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+//
+//  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+//  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+//  TORT OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE
+//  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// =============================================================================
+
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -12,12 +63,13 @@ using CodeEditorLib.Themes;
 
 namespace CodeEditorLib.Controls
 {
-   
     public class CodeEditorControl : UserControl
     {
         private RichTextBox _textBox;
         private LineNumberPanel _linePanel;
         private Panel _lineContainer;
+        private MinimapPanel _minimap;
+        private ContextMenuStrip _contextMenu;
 
         private SyntaxHighlighter _highlighter;
         private UndoRedoManager _undoRedo;
@@ -33,6 +85,7 @@ namespace CodeEditorLib.Controls
         private bool _autoBrackets;
         private bool _autoIndent;
         private bool _wordWrap;
+        private bool _showMinimap;
         private string _lastText;
         private string _lastHighlightedText;
         private Timer _highlightTimer;
@@ -84,6 +137,7 @@ namespace CodeEditorLib.Controls
             _autoBrackets         = true;
             _autoIndent           = true;
             _wordWrap             = false;
+            _showMinimap          = true;
             _highlighter          = new SyntaxHighlighter();
             _undoRedo             = new UndoRedoManager();
             _highlighting         = false;
@@ -99,7 +153,7 @@ namespace CodeEditorLib.Controls
             };
 
             BuildLayout();
-            ApplyTheme(new Themes.DarkTheme());
+            ApplyTheme(new DarkTheme());
         }
 
         private void BuildLayout()
@@ -127,15 +181,114 @@ namespace CodeEditorLib.Controls
             _textBox.KeyDown          += OnKeyDown;
             _textBox.KeyPress         += OnKeyPress;
 
-            _textBox.VScroll += delegate(object s, EventArgs e) { _linePanel.Invalidate(); };
+            _textBox.VScroll += delegate(object s, EventArgs e) { _linePanel.Invalidate(); _minimap.Invalidate(); };
             _textBox.HScroll += delegate(object s, EventArgs e) { _linePanel.Invalidate(); };
 
             _linePanel.Editor = _textBox;
-
+            _minimap        = new MinimapPanel();
+            _minimap.Dock   = DockStyle.Right;
+            _minimap.Width  = 80;
+            _minimap.Editor = _textBox;
             _lineContainer.Controls.Add(_textBox);
+            _lineContainer.Controls.Add(_minimap);
             _lineContainer.Controls.Add(_linePanel);
             Controls.Add(_lineContainer);
+            BuildContextMenu();
+            _textBox.ContextMenuStrip = _contextMenu;
+
             ResumeLayout(false);
+        }
+
+        private void BuildContextMenu()
+        {
+            _contextMenu = new ContextMenuStrip();
+            _contextMenu.Renderer = new ContextMenuRenderer();
+
+            ToolStripMenuItem miUndo      = new ToolStripMenuItem("Undo",         null, delegate { Undo(); });
+            ToolStripMenuItem miRedo      = new ToolStripMenuItem("Redo",         null, delegate { Redo(); });
+            ToolStripSeparator sep1       = new ToolStripSeparator();
+            ToolStripMenuItem miCut       = new ToolStripMenuItem("Cut",          null, delegate { Cut(); });
+            ToolStripMenuItem miCopy      = new ToolStripMenuItem("Copy",         null, delegate { Copy(); });
+            ToolStripMenuItem miPaste     = new ToolStripMenuItem("Paste",        null, delegate { Paste(); });
+            ToolStripMenuItem miDelete    = new ToolStripMenuItem("Delete",       null, delegate { if (_textBox.SelectionLength > 0) _textBox.SelectedText = string.Empty; });
+            ToolStripSeparator sep2       = new ToolStripSeparator();
+            ToolStripMenuItem miSelectAll = new ToolStripMenuItem("Select All",   null, delegate { SelectAll(); });
+            ToolStripSeparator sep3       = new ToolStripSeparator();
+            ToolStripMenuItem miComment   = new ToolStripMenuItem("Toggle Comment", null, delegate { ToggleComment(); });
+            ToolStripMenuItem miIndent    = new ToolStripMenuItem("Indent",       null, delegate { IndentSelection(); });
+            ToolStripMenuItem miOutdent   = new ToolStripMenuItem("Outdent",      null, delegate { OutdentSelection(); });
+            ToolStripSeparator sep4       = new ToolStripSeparator();
+            ToolStripMenuItem miFind      = new ToolStripMenuItem("Find...",      null, delegate { ShowFindDialog(); });
+            ToolStripMenuItem miReplace   = new ToolStripMenuItem("Replace...",   null, delegate { ShowReplaceDialog(); });
+            ToolStripMenuItem miGoto      = new ToolStripMenuItem("Go To Line...", null, delegate { ShowGotoDialog(); });
+            ToolStripSeparator sep5       = new ToolStripSeparator();
+            ToolStripMenuItem miMinimap   = new ToolStripMenuItem("Show Minimap", null, delegate
+            {
+                ShowMinimap = !ShowMinimap;
+            });
+            miMinimap.Checked = _showMinimap;
+
+            miUndo.ShortcutKeyDisplayString      = "Ctrl+Z";
+            miRedo.ShortcutKeyDisplayString      = "Ctrl+Y";
+            miCut.ShortcutKeyDisplayString       = "Ctrl+X";
+            miCopy.ShortcutKeyDisplayString      = "Ctrl+C";
+            miPaste.ShortcutKeyDisplayString     = "Ctrl+V";
+            miSelectAll.ShortcutKeyDisplayString = "Ctrl+A";
+            miComment.ShortcutKeyDisplayString   = "Ctrl+/";
+            miFind.ShortcutKeyDisplayString      = "Ctrl+F";
+            miReplace.ShortcutKeyDisplayString   = "Ctrl+H";
+            miGoto.ShortcutKeyDisplayString      = "Ctrl+G";
+
+            _contextMenu.Items.AddRange(new ToolStripItem[]
+            {
+                miUndo, miRedo,
+                sep1,
+                miCut, miCopy, miPaste, miDelete,
+                sep2,
+                miSelectAll,
+                sep3,
+                miComment, miIndent, miOutdent,
+                sep4,
+                miFind, miReplace, miGoto,
+                sep5,
+                miMinimap
+            });
+
+            _contextMenu.Opening += delegate(object s, System.ComponentModel.CancelEventArgs e)
+            {
+                miUndo.Enabled    = CanUndo;
+                miRedo.Enabled    = CanRedo;
+                miCut.Enabled     = _textBox.SelectionLength > 0 && !_textBox.ReadOnly;
+                miCopy.Enabled    = _textBox.SelectionLength > 0;
+                miPaste.Enabled   = !_textBox.ReadOnly && Clipboard.ContainsText();
+                miDelete.Enabled  = _textBox.SelectionLength > 0 && !_textBox.ReadOnly;
+                miComment.Enabled = _formatter != null;
+                miIndent.Enabled  = _formatter != null;
+                miOutdent.Enabled = _formatter != null;
+                miMinimap.Checked = _showMinimap;
+            };
+        }
+
+        private class ContextMenuRenderer : ToolStripProfessionalRenderer
+        {
+            public ContextMenuRenderer()
+                : base(new ContextMenuColorTable()) { }
+        }
+
+        private class ContextMenuColorTable : ProfessionalColorTable
+        {
+            public override Color MenuItemSelected          { get { return Color.FromArgb(60, 60, 80); } }
+            public override Color MenuItemBorder            { get { return Color.FromArgb(80, 80, 100); } }
+            public override Color MenuBorder                { get { return Color.FromArgb(60, 63, 70); } }
+            public override Color ToolStripDropDownBackground { get { return Color.FromArgb(37, 37, 38); } }
+            public override Color ImageMarginGradientBegin  { get { return Color.FromArgb(30, 30, 30); } }
+            public override Color ImageMarginGradientMiddle { get { return Color.FromArgb(30, 30, 30); } }
+            public override Color ImageMarginGradientEnd    { get { return Color.FromArgb(30, 30, 30); } }
+            public override Color SeparatorDark             { get { return Color.FromArgb(60, 63, 70); } }
+            public override Color SeparatorLight            { get { return Color.FromArgb(60, 63, 70); } }
+            public override Color CheckBackground           { get { return Color.FromArgb(86, 156, 214); } }
+            public override Color CheckSelectedBackground   { get { return Color.FromArgb(86, 156, 214); } }
+            public override Color CheckPressedBackground    { get { return Color.FromArgb(86, 156, 214); } }
         }
 
 
@@ -179,6 +332,17 @@ namespace CodeEditorLib.Controls
         {
             get { return _theme; }
             set { ApplyTheme(value); }
+        }
+
+      
+        public string ThemeName
+        {
+            get { return _theme != null ? _theme.Name : string.Empty; }
+            set
+            {
+                EditorTheme t = ThemeRegistry.Instance.GetByName(value);
+                if (t != null) ApplyTheme(t);
+            }
         }
 
         public override Font Font
@@ -229,6 +393,18 @@ namespace CodeEditorLib.Controls
             set { _wordWrap = value; _textBox.WordWrap = value; }
         }
 
+        public bool ShowMinimap
+        {
+            get { return _showMinimap; }
+            set
+            {
+                _showMinimap        = value;
+                _minimap.Visible    = value;
+                _minimap.Width      = value ? 80 : 0;
+                _lineContainer.Invalidate(true);
+            }
+        }
+
         public int TabSize
         {
             get { return _tabSize; }
@@ -268,6 +444,30 @@ namespace CodeEditorLib.Controls
             _textBox.ForeColor = theme.DefaultTextColor;
             _linePanel.Theme   = theme;
             _linePanel.Invalidate();
+
+            if (_minimap != null)
+            {
+                _minimap.Theme     = theme;
+                _minimap.BackColor = theme.BackgroundColor;
+            }
+
+            if (_contextMenu != null)
+            {
+                bool isDark = theme.BackgroundColor.GetBrightness() < 0.5f;
+                Color menuBg   = isDark ? Color.FromArgb(37, 37, 38)   : Color.FromArgb(240, 240, 242);
+                Color menuFg   = isDark ? Color.FromArgb(220, 220, 220) : Color.FromArgb(30, 30, 30);
+                Color selBg    = isDark ? Color.FromArgb(60, 60, 80)   : Color.FromArgb(180, 200, 230);
+                Color sepColor = isDark ? Color.FromArgb(60, 63, 70)   : Color.FromArgb(200, 200, 205);
+
+                _contextMenu.BackColor = menuBg;
+                _contextMenu.ForeColor = menuFg;
+                foreach (ToolStripItem item in _contextMenu.Items)
+                {
+                    item.BackColor = menuBg;
+                    item.ForeColor = menuFg;
+                }
+            }
+
             _lastHighlightedText = null;
             ApplyHighlighting();
         }
@@ -312,7 +512,7 @@ namespace CodeEditorLib.Controls
             finally
             {
                 SetRedraw(true);
-                _textBox.Refresh();     
+                _textBox.Refresh();
                 _highlighting   = false;
                 _suppressEvents = false;
             }
@@ -325,12 +525,12 @@ namespace CodeEditorLib.Controls
             Color           defaultBg = _theme.BackgroundColor;
             int             fontSize  = (int)(_textBox.Font.Size * 2);
 
-            List<Color>          table   = new List<Color>();
-            Dictionary<int, int> slotOf  = new Dictionary<int, int>();
+            List<Color>          table  = new List<Color>();
+            Dictionary<int, int> slotOf = new Dictionary<int, int>();
 
-            table.Add(Color.Black);                
-            table.Add(defaultFg);                  
-            table.Add(defaultBg);                 
+            table.Add(Color.Black);
+            table.Add(defaultFg);
+            table.Add(defaultBg);
             slotOf[defaultFg.ToArgb()] = 1;
             slotOf[defaultBg.ToArgb()] = 2;
 
@@ -358,7 +558,7 @@ namespace CodeEditorLib.Controls
             sb.Append(@"{\rtf1\ansi\ansicpg1252\deff0");
             sb.Append(@"{\fonttbl{\f0\fmodern\fcharset0 ").Append(fontName).Append(@";}}");
 
-            sb.Append(@"{\colortbl;");  
+            sb.Append(@"{\colortbl;");
             for (int i = 1; i < table.Count; i++)
                 sb.AppendFormat(@"\red{0}\green{1}\blue{2};", table[i].R, table[i].G, table[i].B);
             sb.Append("}");
@@ -368,9 +568,9 @@ namespace CodeEditorLib.Controls
             int len  = text.Length;
             int tIdx = 0;
 
-            int   curFg = 1, curBg = 2;
-            bool  curBold = false, curItalic = false, curUnder = false;
-            bool  groupOpen = false;
+            int  curFg = 1, curBg = 2;
+            bool curBold = false, curItalic = false, curUnder = false;
+            bool groupOpen = false;
 
             for (int pos = 0; pos < len; pos++)
             {
@@ -400,7 +600,7 @@ namespace CodeEditorLib.Controls
                 {
                     if (groupOpen) { sb.Append('}'); groupOpen = false; }
                     sb.Append(@"\par").Append("\r\n");
-                    curFg = -1; 
+                    curFg = -1;
                     continue;
                 }
 
@@ -424,13 +624,13 @@ namespace CodeEditorLib.Controls
                 }
 
                 if      (c == '\\') sb.Append(@"\\");
-                else if (c == '{' )   sb.Append(@"\{");
-                else if (c == '}' )   sb.Append(@"\}");
-                else if (c > 127)     sb.AppendFormat(@"\u{0}?", (int)c);
-                else                  sb.Append(c);
+                else if (c == '{' ) sb.Append(@"\{");
+                else if (c == '}' ) sb.Append(@"\}");
+                else if (c > 127)   sb.AppendFormat(@"\u{0}?", (int)c);
+                else                sb.Append(c);
             }
 
-            if (groupOpen) { sb.Append('}'); groupOpen = false; }
+            if (groupOpen) sb.Append('}');
 
             sb.Append('}');
             return sb.ToString();
@@ -450,6 +650,7 @@ namespace CodeEditorLib.Controls
             _linePanel.Width = _showLineNumbers
                 ? _linePanel.ComputeWidth(_textBox.Lines.Length) : 0;
             _linePanel.Invalidate();
+            if (_minimap != null) _minimap.InvalidateCache();
 
             ScheduleHighlight();
 
@@ -475,13 +676,13 @@ namespace CodeEditorLib.Controls
             {
                 switch (e.KeyCode)
                 {
-                    case Keys.Z:           Undo();          e.Handled = true; return;
-                    case Keys.Y:           Redo();          e.Handled = true; return;
+                    case Keys.Z:           Undo();              e.Handled = true; return;
+                    case Keys.Y:           Redo();              e.Handled = true; return;
                     case Keys.OemQuestion:
-                    case Keys.Divide:      ToggleComment();    e.Handled = true; return;
-                    case Keys.F:           ShowFindDialog();   e.Handled = true; return;
-                    case Keys.H:           ShowReplaceDialog();e.Handled = true; return;
-                    case Keys.G:           ShowGotoDialog();   e.Handled = true; return;
+                    case Keys.Divide:      ToggleComment();     e.Handled = true; return;
+                    case Keys.F:           ShowFindDialog();    e.Handled = true; return;
+                    case Keys.H:           ShowReplaceDialog(); e.Handled = true; return;
+                    case Keys.G:           ShowGotoDialog();    e.Handled = true; return;
                 }
             }
 
@@ -658,20 +859,11 @@ namespace CodeEditorLib.Controls
 
         public void ShowGotoDialog()
         {
-            using (Form dlg = new Form { Text="Go To Line", Size=new Size(260,110),
-                FormBorderStyle=FormBorderStyle.FixedDialog,
-                MaximizeBox=false, MinimizeBox=false,
-                StartPosition=FormStartPosition.CenterParent })
+            int total = Math.Max(1, _textBox.Lines.Length);
+            using (GoToLineDialog dlg = new GoToLineDialog(_theme, _textBox, CurrentLine, total))
             {
-                Label lbl = new Label { Text="Line number:", Left=10, Top=15, AutoSize=true };
-                NumericUpDown num = new NumericUpDown
-                    { Left=100, Top=12, Width=80, Minimum=1,
-                      Maximum=_textBox.Lines.Length, Value=CurrentLine };
-                Button ok  = new Button { Text="Go",     Left=70,  Top=45, DialogResult=DialogResult.OK };
-                Button can = new Button { Text="Cancel",  Left=155, Top=45, DialogResult=DialogResult.Cancel };
-                dlg.AcceptButton = ok; dlg.CancelButton = can;
-                dlg.Controls.AddRange(new Control[] { lbl, num, ok, can });
-                if (dlg.ShowDialog(this) == DialogResult.OK) GotoLine((int)num.Value);
+                if (dlg.ShowDialog(this) == DialogResult.OK)
+                    GotoLine(dlg.SelectedLine);
             }
         }
 
@@ -679,8 +871,10 @@ namespace CodeEditorLib.Controls
         {
             lineNumber = Math.Max(1, Math.Min(lineNumber, _textBox.Lines.Length));
             int ci = _textBox.GetFirstCharIndexFromLine(lineNumber - 1);
-            _textBox.SelectionStart = ci; _textBox.SelectionLength = 0;
-            _textBox.ScrollToCaret(); _textBox.Focus();
+            _textBox.SelectionStart  = ci;
+            _textBox.SelectionLength = 0;
+            _textBox.ScrollToCaret();
+            _textBox.Focus();
         }
 
         public void OpenFile(string path)
@@ -702,49 +896,123 @@ namespace CodeEditorLib.Controls
 
         private Form BuildFRDialog(bool showReplace)
         {
-            Form dlg = new Form { Text = showReplace ? "Find & Replace" : "Find",
-                Size = new Size(370, showReplace ? 190 : 145),
-                FormBorderStyle = FormBorderStyle.FixedDialog,
-                MaximizeBox=false, MinimizeBox=false,
-                StartPosition = FormStartPosition.CenterParent };
+            Color bg      = _theme != null ? _theme.BackgroundColor       : SystemColors.Control;
+            Color fg      = _theme != null ? _theme.DefaultTextColor      : SystemColors.ControlText;
+            Color inputBg = _theme != null ? _theme.LineNumberBackColor   : SystemColors.Window;
+            Color borderC = _theme != null ? _theme.LineNumberBorderColor : SystemColors.ControlDark;
+            Color accentC = Color.FromArgb(86, 156, 214);
 
-            int y = 10;
-            Label lf = new Label { Text="Find:", Left=10, Top=y+3, AutoSize=true };
-            TextBox tf = new TextBox { Left=80, Top=y, Width=260 };
-            y += 30;
+            Form dlg = new Form
+            {
+                Text            = showReplace ? "Find & Replace" : "Find",
+                Size            = new Size(400, showReplace ? 210 : 165),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox     = false,
+                MinimizeBox     = false,
+                StartPosition   = FormStartPosition.CenterParent,
+                BackColor       = bg
+            };
+
+            int y = 14;
+
+            Label lf = new Label
+            {
+                Text      = "Find:",
+                Left      = 12, Top = y + 3,
+                AutoSize  = true,
+                ForeColor = fg,
+                BackColor = Color.Transparent
+            };
+            TextBox tf = new TextBox
+            {
+                Left        = 82, Top = y, Width = 290,
+                BackColor   = inputBg, ForeColor = fg,
+                BorderStyle = BorderStyle.FixedSingle,
+                Font        = new Font("Consolas", 10f)
+            };
+            y += 32;
 
             TextBox tr = null;
             if (showReplace)
             {
-                Label lr = new Label { Text="Replace:", Left=10, Top=y+3, AutoSize=true };
-                tr = new TextBox { Left=80, Top=y, Width=260 };
+                Label lr = new Label
+                {
+                    Text      = "Replace:",
+                    Left      = 12, Top = y + 3,
+                    AutoSize  = true,
+                    ForeColor = fg,
+                    BackColor = Color.Transparent
+                };
+                tr = new TextBox
+                {
+                    Left        = 82, Top = y, Width = 290,
+                    BackColor   = inputBg, ForeColor = fg,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    Font        = new Font("Consolas", 10f)
+                };
                 dlg.Controls.AddRange(new Control[] { lr, tr });
-                y += 30;
+                y += 32;
             }
 
-            CheckBox cc = new CheckBox { Text="Match case", Left=10,  Top=y, AutoSize=true };
-            CheckBox cw = new CheckBox { Text="Whole word", Left=120, Top=y, AutoSize=true };
-            y += 28;
+            CheckBox cc = new CheckBox
+            {
+                Text      = "Match case",
+                Left      = 12, Top = y,
+                AutoSize  = true,
+                ForeColor = fg,
+                BackColor = Color.Transparent
+            };
+            CheckBox cw = new CheckBox
+            {
+                Text      = "Whole word",
+                Left      = 130, Top = y,
+                AutoSize  = true,
+                ForeColor = fg,
+                BackColor = Color.Transparent
+            };
+            y += 30;
 
-            Button bf = new Button { Text="Find Next",  Left=10,  Top=y, Width=90 };
-            Button bc = new Button { Text="Close", Left=260, Top=y, Width=80,
-                                     DialogResult=DialogResult.Cancel };
+            Button bf = MakeFlatButton("Find Next",  accentC, Color.White, 12,  y, 100);
+            Button bc = MakeFlatButton("Close",      bg,      fg,          290, y,  80);
+            bc.FlatAppearance.BorderColor = borderC;
+            bc.FlatAppearance.BorderSize  = 1;
+            bc.DialogResult = DialogResult.Cancel;
             dlg.CancelButton = bc;
             bf.Click += delegate { FindNext(tf.Text, cc.Checked, cw.Checked); };
+
             dlg.Controls.AddRange(new Control[] { lf, tf, cc, cw, bf, bc });
 
             if (showReplace)
             {
-                Button br = new Button { Text="Replace All", Left=110, Top=y, Width=90 };
+                Button br = MakeFlatButton("Replace All", inputBg, fg, 122, y, 110);
+                br.FlatAppearance.BorderColor = borderC;
+                br.FlatAppearance.BorderSize  = 1;
                 br.Click += delegate
                 {
-                    int n = ReplaceAll(tf.Text, tr != null ? tr.Text : "", cc.Checked, cw.Checked);
+                    int n = ReplaceAll(tf.Text,
+                                       tr != null ? tr.Text : string.Empty,
+                                       cc.Checked, cw.Checked);
                     MessageBox.Show(n + " replacement(s) made.", "Replace All",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 };
                 dlg.Controls.Add(br);
             }
             return dlg;
+        }
+
+        private static Button MakeFlatButton(string text, Color back, Color fore, int x, int y, int w)
+        {
+            Button b = new Button
+            {
+                Text      = text,
+                Left      = x, Top = y, Width = w, Height = 28,
+                BackColor = back, ForeColor = fore,
+                FlatStyle = FlatStyle.Flat,
+                Font      = new Font("Segoe UI", 9f),
+                Cursor    = Cursors.Hand
+            };
+            b.FlatAppearance.BorderSize = 0;
+            return b;
         }
 
         private void InitializeComponent()

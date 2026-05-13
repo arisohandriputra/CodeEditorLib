@@ -1,12 +1,113 @@
+// =============================================================================
+//  Light Theme for CodeEditorLib
+// =============================================================================
+//
+//  Description :
+//  Provides a light-mode visual theme configuration for the CodeEditorLib
+//  code editor control.
+//
+//  This theme is responsible for:
+//  - Defining a clean light UI color palette
+//  - Styling editor background and text for readability
+//  - Configuring selection, caret, and current line appearance
+//  - Styling line number panel and borders
+//  - Defining autocomplete popup colors
+//  - Mapping syntax highlighting colors for all supported token types
+//
+// -----------------------------------------------------------------------------
+//
+//  Theme Design Philosophy:
+//  - Bright, high-contrast interface for daytime usage
+//  - Minimal visual noise for readability
+//  - Traditional IDE-like color mapping
+//  - Clear separation between UI elements and code content
+//
+// -----------------------------------------------------------------------------
+//
+//  UI Components Styled:
+//  - Editor background (white canvas)
+//  - Default text (black)
+//  - Selection highlight (light blue)
+//  - Current line highlight (subtle blue tint)
+//  - Line number panel (light gray background)
+//  - Caret (black cursor)
+//  - Bracket match highlight (soft yellow)
+//  - Autocomplete dropdown styling
+//
+// -----------------------------------------------------------------------------
+//
+//  Syntax Highlighting Scheme:
+//  Defines token-to-color mapping for all supported languages:
+//
+//  - Keywords      -> Blue (bold emphasis)
+//  - Strings       -> Dark red
+//  - Comments      -> Green
+//  - Numbers       -> Greenish tone
+//  - Types         -> Teal/blue
+//  - Operators     -> Black
+//  - Preprocessor  -> Gray
+//  - Identifiers   -> Black
+//
+//  Multi-language token support:
+//  - XML / HTML tags, attributes, values
+//  - CSS selectors, properties, values
+//  - SQL keywords and functions
+//
+// -----------------------------------------------------------------------------
+//
+//  Rendering System:
+//  Uses HighlightScheme-based token mapping where each TokenType is
+//  associated with a HighlightStyle defining color and formatting.
+//
+//  Rendering priority rules:
+//  - Comments override all syntax elements
+//  - Strings override keywords and identifiers
+//  - Keywords override identifiers
+//  - Structured language tokens (XML/HTML/CSS/SQL) are handled separately
+//
+// -----------------------------------------------------------------------------
+//
+//  Typical Usage:
+//  - Light-mode IDE/editor environments
+//  - Business applications with embedded code editors
+//  - Documentation or configuration editing tools
+//  - Windows Forms developer tools
+//
+// -----------------------------------------------------------------------------
+//
+//  Author      : Ari Sohandri Putra
+//  Repository  : https://github.com/arisohandriputra/CodeEditorLib
+//  License     : MIT License
+//  Copyright   : Copyright (c) 2026 Ari Sohandri Putra
+//
+// -----------------------------------------------------------------------------
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software.
+//
+//  THE SOFTWARE IS PROVIDED WITHOUT WARRANTY OF ANY KIND,
+//  EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+//  MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+//
+//  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+//  CLAIM, DAMAGES OR OTHER LIABILITY,
+//  WHETHER IN AN ACTION OF CONTRACT,
+//  TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// =============================================================================
+
 using System.Drawing;
 using CodeEditorLib.Core;
 using CodeEditorLib.Highlighting;
 
 namespace CodeEditorLib.Themes
 {
-    /// <summary>
-    /// Light theme inspired by Visual Studio / IntelliJ Light.
-    /// </summary>
     public class LightTheme : EditorTheme
     {
         public LightTheme() : base("Light") { }

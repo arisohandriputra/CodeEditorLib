@@ -19,9 +19,10 @@ If CodeEditorLib saved you time or you're using it in something real, consider s
 </div>
 
 ---
+
 <img width="941" height="668" alt="image" src="https://github.com/user-attachments/assets/f2a9edbc-ebdf-4992-b013-0e9a09428478" />
 
-A Windows Forms code editor control for .NET. Drop it into any WinForms project and you get a working code editor - syntax highlighting, line numbers, themes, undo/redo, auto-indent, find & replace, the whole thing. No external dependencies.
+A Windows Forms code editor control for .NET. Drop it into any WinForms project and you get a working code editor — syntax highlighting, line numbers, themes, minimap, undo/redo, auto-indent, find & replace, the whole thing. No external dependencies.
 
 I built this because I kept rewriting the same editor boilerplate across different projects. Now I just reference the DLL and move on.
 
@@ -33,7 +34,8 @@ Everything works out of the box without any extra setup:
 
 - Syntax highlighting for 13 languages
 - Line number gutter that scrolls with the content
-- Built-in Light and Dark themes, easy to make your own
+- **Minimap panel** — color-coded code overview with viewport indicator and click/drag navigation
+- 7 built-in themes (Dark, Light, Monokai, Solarized Dark, Solarized Light, Nord, Dracula), easy to make your own
 - Undo/Redo up to 500 steps back
 - Auto-indent on Enter
 - Auto-close for `(`, `{`, `[`
@@ -41,9 +43,11 @@ Everything works out of the box without any extra setup:
 - Comment/uncomment selected lines in one shot
 - Indent and outdent multiple lines at once
 - Current line highlight
-- Go To Line dialog
+- Go To Line dialog with live preview and slider
 - Word wrap toggle
 - Configurable tab size
+- Open and save files directly from the control
+- Right-click context menu with all common actions and keyboard shortcut hints
 
 ---
 
@@ -104,14 +108,33 @@ _editor.HighlightCurrentLine = true;
 _editor.AutoBrackets         = true;
 _editor.AutoIndent           = true;
 _editor.WordWrap             = false;
+_editor.ShowMinimap          = true;
 _editor.ReadOnly             = false;
 ```
 
 ### Switching themes
 
 ```csharp
+// set directly by instance
 _editor.Theme = new DarkTheme();
 _editor.Theme = new LightTheme();
+_editor.Theme = new MonokaiTheme();
+_editor.Theme = new SolarizedDarkTheme();
+_editor.Theme = new SolarizedLightTheme();
+_editor.Theme = new NordTheme();
+_editor.Theme = new DraculaTheme();
+
+// or by name via the registry
+_editor.ThemeName = "Dracula";
+```
+
+You can also browse all available themes at runtime:
+
+```csharp
+foreach (string name in ThemeRegistry.Instance.GetSortedThemeNames())
+{
+    comboTheme.Items.Add(name);
+}
 ```
 
 ### Setting the language
@@ -126,6 +149,43 @@ _editor.Language = LanguageRegistry.Instance.GetByExtension(".rs");
 // auto-detect from a file path — handy when the user opens a file
 _editor.Language = LanguageRegistry.Instance.GetByFilePath(@"C:\project\main.go");
 ```
+
+### Opening and saving files
+
+```csharp
+_editor.OpenFile(@"C:\project\main.cs");   // loads content and auto-detects language
+_editor.SaveFile(@"C:\project\main.cs");   // writes current content to disk
+```
+
+---
+
+## Minimap
+
+The minimap is shown on the right side of the editor by default. It renders a compact color-coded overview of the entire file — different line types (keywords, imports, comments, strings, control flow) are drawn in distinct colors so you can visually orient yourself in a large file at a glance.
+
+Click anywhere on the minimap to jump to that position. Click and drag to scroll continuously. The viewport indicator shows exactly which portion of the file is currently visible in the editor.
+
+```csharp
+_editor.ShowMinimap = true;   // show/hide
+_editor.ShowMinimap = false;
+```
+
+The minimap can also be toggled at runtime from the editor's right-click context menu.
+
+---
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+Z` | Undo |
+| `Ctrl+Y` | Redo |
+| `Ctrl+/` | Toggle comment |
+| `Ctrl+F` | Find |
+| `Ctrl+H` | Replace |
+| `Ctrl+G` | Go To Line |
+| `Tab` | Indent selection (when text is selected) |
+| `Shift+Tab` | Outdent selection |
 
 ---
 
@@ -174,6 +234,8 @@ outdentButton.Click += (s, e) => _editor.OutdentSelection();
 findButton.Click    += (s, e) => _editor.ShowFindDialog();
 replaceButton.Click += (s, e) => _editor.ShowReplaceDialog();
 gotoButton.Click    += (s, e) => _editor.ShowGotoDialog();
+openButton.Click    += (s, e) => _editor.OpenFile(filePath);
+saveButton.Click    += (s, e) => _editor.SaveFile(filePath);
 
 // keep undo/redo buttons in sync
 undoButton.Enabled = _editor.CanUndo;
@@ -188,7 +250,9 @@ redoButton.Enabled = _editor.CanRedo;
 CodeEditorLib/
 ├── Controls/
 │   ├── CodeEditorControl.cs      # the main UserControl
-│   └── LineNumberPanel.cs        # the line number gutter
+│   ├── LineNumberPanel.cs        # the line number gutter
+│   ├── MinimapPanel.cs           # color-coded minimap with viewport indicator
+│   └── GoToLineDialog.cs         # go to line dialog with slider and live preview
 ├── Core/
 │   ├── CodeFormatter.cs          # indent, outdent, comment helpers
 │   ├── LanguageDefinition.cs     # base class for all languages
@@ -207,8 +271,14 @@ CodeEditorLib/
 │   └── [13 language files]
 ├── Themes/
 │   ├── EditorTheme.cs            # abstract base
+│   ├── ThemeRegistry.cs          # singleton, lookup by name
 │   ├── DarkTheme.cs
-│   └── LightTheme.cs
+│   ├── LightTheme.cs
+│   ├── MonokaiTheme.cs
+│   ├── SolarizedDarkTheme.cs
+│   ├── SolarizedLightTheme.cs
+│   ├── NordTheme.cs
+│   └── DraculaTheme.cs
 └── Properties/
     └── AssemblyInfo.cs
 ```
@@ -265,7 +335,7 @@ After that it works exactly like any built-in language — by name, by extension
 
 ## Making a custom theme
 
-Subclass `EditorTheme`, fill in the colors, and build the highlight scheme:
+Subclass `EditorTheme`, fill in the colors, and build the highlight scheme. You can also register it in `ThemeRegistry` so it's accessible by name:
 
 ```csharp
 using System.Drawing;
@@ -301,7 +371,14 @@ public class SolarizedDarkTheme : EditorTheme
 }
 ```
 
-Then just set it:
+Register it so it's accessible by name:
+
+```csharp
+ThemeRegistry.Instance.Register(new SolarizedDarkTheme());
+_editor.ThemeName = "Solarized Dark";
+```
+
+Or just set it directly:
 
 ```csharp
 _editor.Theme = new SolarizedDarkTheme();
@@ -319,7 +396,7 @@ _editor.Theme = new SolarizedDarkTheme();
 
 ## Contributing
 
-Pull requests are welcome. If you're adding a language, subclass `LanguageDefinition` and register it in `LanguageRegistry.RegisterDefaults()`. Keep the PR focused on one thing and make sure existing behavior still works.
+Pull requests are welcome. If you're adding a language, subclass `LanguageDefinition` and register it in `LanguageRegistry.RegisterDefaults()`. For a new theme, subclass `EditorTheme` and register it in `ThemeRegistry.RegisterDefaults()`. Keep the PR focused on one thing and make sure existing behavior still works.
 
 For bugs, a small reproducible snippet is worth more than a paragraph of description.
 

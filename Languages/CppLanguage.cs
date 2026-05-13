@@ -1,3 +1,139 @@
+// =============================================================================
+//  C++ Language Definition for CodeEditorLib
+// =============================================================================
+//
+//  Description :
+//  Provides full C and C++ language configuration used by
+//  the editor syntax highlighting and parsing engine.
+//
+//  This file is responsible for:
+//  - Defining C/C++ language metadata
+//  - Registering supported file extensions
+//  - Configuring syntax highlighting rules
+//  - Detecting comments and strings
+//  - Detecting keywords, types, numbers, and operators
+//  - Supporting automatic indentation behavior
+//  - Supporting bracket pair matching
+//
+// -----------------------------------------------------------------------------
+//
+//  Supported File Extensions:
+//  - .cpp
+//  - .cc
+//  - .cxx
+//  - .c
+//  - .h
+//  - .hpp
+//  - .hxx
+//
+// -----------------------------------------------------------------------------
+//
+//  Syntax Highlighting Features:
+//  - Single-line comments      -> // comment
+//  - Multi-line comments       -> /* comment */
+//  - Raw string literals       -> R"(text)"
+//  - Standard string literals  -> "text"
+//  - Character literals        -> 'A'
+//  - Preprocessor directives   -> #include
+//  - C++ keywords              -> class, template, constexpr
+//  - Types and identifiers
+//  - Numeric literals
+//  - Operators and symbols
+//
+// -----------------------------------------------------------------------------
+//
+//  Keyword Support:
+//  Includes modern C++ keywords such as:
+//  - constexpr
+//  - consteval
+//  - co_await
+//  - requires
+//  - concept
+//  - override
+//  - final
+//
+//  Compatible with modern C++ standards including:
+//  - C++11
+//  - C++14
+//  - C++17
+//  - C++20
+//
+// -----------------------------------------------------------------------------
+//
+//  Auto Indentation:
+//  Automatically increases indentation level after lines
+//  ending with opening braces '{'.
+//
+//  Example:
+//      if (value)
+//      {
+//          |
+//      }
+//
+// -----------------------------------------------------------------------------
+//
+//  Bracket Pair Support:
+//  Automatically recognizes matching bracket pairs:
+//
+//      ( )
+//      [ ]
+//      { }
+//      < >
+//
+//  Useful for:
+//  - Auto-closing brackets
+//  - Bracket highlighting
+//  - Code navigation
+//
+// -----------------------------------------------------------------------------
+//
+//  Internal Parsing System:
+//  Uses regex-based syntax rules with priorities.
+//
+//  Higher priority rules are processed first to ensure:
+//  - Correct token classification
+//  - Proper comment/string detection
+//  - Accurate syntax rendering
+//
+// -----------------------------------------------------------------------------
+//
+//  Typical Usage:
+//  - C/C++ source editing
+//  - Header file editing
+//  - Syntax highlighting
+//  - Code parsing systems
+//  - IDE/editor integration
+//
+// -----------------------------------------------------------------------------
+//
+//  Author      : Ari Sohandri Putra
+//  Repository  : https://github.com/arisohandriputra/CodeEditorLib
+//  License     : MIT License
+//  Copyright   : Copyright (c) 2026 Ari Sohandri Putra
+//
+// -----------------------------------------------------------------------------
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+//  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+//  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+//
+//  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+//  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+//  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+//  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// =============================================================================
+
 using System;
 using System.Collections.Generic;
 using CodeEditorLib.Core;

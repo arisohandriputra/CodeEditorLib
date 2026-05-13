@@ -1,3 +1,142 @@
+// =============================================================================
+//  JavaScript Language Definition for CodeEditorLib
+// =============================================================================
+//
+//  Description :
+//  Provides JavaScript language configuration used by the
+//  editor syntax highlighting and parsing engine.
+//
+//  This file is responsible for:
+//  - Defining JavaScript language metadata
+//  - Registering JavaScript file extensions
+//  - Configuring syntax highlighting rules
+//  - Detecting comments and string literals
+//  - Detecting keywords, built-in objects, and operators
+//  - Supporting automatic indentation behavior
+//
+// -----------------------------------------------------------------------------
+//
+//  Supported File Extensions:
+//  - .js
+//  - .jsx
+//  - .mjs
+//
+// -----------------------------------------------------------------------------
+//
+//  Syntax Highlighting Features:
+//  - Single-line comments      -> // comment
+//  - Multi-line comments       -> /* comment */
+//  - Standard string literals  -> "text"
+//  - Single-quoted strings     -> 'text'
+//  - Template literals         -> `text`
+//  - JavaScript keywords       -> function, class, async
+//  - Built-in objects/functions
+//  - Numeric literals
+//  - Operators and expressions
+//
+// -----------------------------------------------------------------------------
+//
+//  Keyword Support:
+//  Includes modern JavaScript keywords such as:
+//  - let
+//  - const
+//  - class
+//  - async
+//  - await
+//  - import
+//  - export
+//  - yield
+//
+//  Compatible with modern ECMAScript syntax.
+//
+// -----------------------------------------------------------------------------
+//
+//  Built-in Object Recognition:
+//  Detects common JavaScript built-in objects
+//  and browser APIs.
+//
+//  Examples:
+//  - console
+//  - document
+//  - window
+//  - Array
+//  - Promise
+//  - JSON
+//  - fetch
+//
+// -----------------------------------------------------------------------------
+//
+//  Operator Support:
+//  Recognizes modern JavaScript operators such as:
+//
+//  Examples:
+//  - Arrow function     -> =>
+//  - Optional chaining  -> ?.
+//  - Arithmetic         -> + - * /
+//  - Comparison         -> == === !=
+//
+// -----------------------------------------------------------------------------
+//
+//  Auto Indentation:
+//  Automatically increases indentation after lines
+//  ending with opening braces '{'.
+//
+//  Example:
+//      function test()
+//      {
+//          |
+//      }
+//
+// -----------------------------------------------------------------------------
+//
+//  Internal Parsing System:
+//  Uses regex-based syntax rules with priority ordering.
+//
+//  Priority handling ensures:
+//  - Comments override keywords
+//  - Template literals are parsed correctly
+//  - Built-ins are highlighted separately
+//  - Accurate token classification
+//
+// -----------------------------------------------------------------------------
+//
+//  Typical Usage:
+//  - JavaScript source editing
+//  - Web application development
+//  - Frontend scripting
+//  - Syntax highlighting
+//  - IDE/editor integration
+//
+// -----------------------------------------------------------------------------
+//
+//  Author      : Ari Sohandri Putra
+//  Repository  : https://github.com/arisohandriputra/CodeEditorLib
+//  License     : MIT License
+//  Copyright   : Copyright (c) 2026 Ari Sohandri Putra
+//
+// -----------------------------------------------------------------------------
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+//  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+//  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+//
+//  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+//  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+//  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+//  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// =============================================================================
+
 using System;
 using System.Collections.Generic;
 using CodeEditorLib.Core;

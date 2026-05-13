@@ -1,3 +1,138 @@
+// =============================================================================
+//  SQL Language Definition for CodeEditorLib
+// =============================================================================
+//
+//  Description :
+//  Provides SQL language configuration used by the
+//  editor syntax highlighting and parsing engine.
+//
+//  This file is responsible for:
+//  - Defining SQL language metadata
+//  - Registering SQL file extensions
+//  - Configuring syntax highlighting rules
+//  - Detecting SQL comments and string literals
+//  - Detecting SQL keywords and built-in functions
+//  - Supporting SQL query syntax parsing
+//
+// -----------------------------------------------------------------------------
+//
+//  Supported File Extensions:
+//  - .sql
+//
+// -----------------------------------------------------------------------------
+//
+//  Syntax Highlighting Features:
+//  - Single-line comments      -> -- comment
+//  - Multi-line comments       -> /* comment */
+//  - SQL string literals       -> 'text'
+//  - Unicode strings           -> N'text'
+//  - SQL keywords              -> SELECT, INSERT, UPDATE
+//  - SQL functions             -> COUNT, SUM, AVG
+//  - Numeric literals
+//
+// -----------------------------------------------------------------------------
+//
+//  Keyword Support:
+//  Includes common SQL commands and clauses such as:
+//  - SELECT
+//  - INSERT
+//  - UPDATE
+//  - DELETE
+//  - CREATE
+//  - ALTER
+//  - JOIN
+//  - GROUP BY
+//  - ORDER BY
+//  - TRANSACTION
+//
+//  Compatible with common SQL dialects.
+//
+// -----------------------------------------------------------------------------
+//
+//  SQL Function Recognition:
+//  Detects common SQL built-in functions.
+//
+//  Examples:
+//  - COUNT()
+//  - SUM()
+//  - AVG()
+//  - GETDATE()
+//  - DATEADD()
+//  - ROW_NUMBER()
+//
+// -----------------------------------------------------------------------------
+//
+//  String Handling:
+//  Supports SQL string literal formats.
+//
+//  Examples:
+//  - 'Hello'
+//  - N'Unicode Text'
+//  - Escaped quotes -> 'It''s SQL'
+//
+// -----------------------------------------------------------------------------
+//
+//  Case-Insensitive Matching:
+//  SQL keyword and function matching uses
+//  case-insensitive regular expressions.
+//
+//  Examples:
+//  - SELECT
+//  - select
+//  - Select
+//
+//  All are recognized correctly.
+//
+// -----------------------------------------------------------------------------
+//
+//  Internal Parsing System:
+//  Uses regex-based syntax rules with priority ordering.
+//
+//  Priority handling ensures:
+//  - Comments override keywords
+//  - Functions are highlighted separately
+//  - Strings are parsed correctly
+//  - Accurate token classification
+//
+// -----------------------------------------------------------------------------
+//
+//  Typical Usage:
+//  - SQL query editing
+//  - Database scripting
+//  - Stored procedure development
+//  - Syntax highlighting
+//  - IDE/editor database integration
+//
+// -----------------------------------------------------------------------------
+//
+//  Author      : Ari Sohandri Putra
+//  Repository  : https://github.com/arisohandriputra/CodeEditorLib
+//  License     : MIT License
+//  Copyright   : Copyright (c) 2026 Ari Sohandri Putra
+//
+// -----------------------------------------------------------------------------
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+//  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+//  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+//
+//  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+//  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+//  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+//  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// =============================================================================
+
 using System;
 using System.Collections.Generic;
 using CodeEditorLib.Core;

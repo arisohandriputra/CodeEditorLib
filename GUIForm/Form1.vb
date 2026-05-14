@@ -6,6 +6,8 @@ Imports CodeEditorLib.Themes
 
 Public Class Form1
 
+    Private Delegate Sub AppendOutputDelegate(ByVal text As String, ByVal color As Color)
+
     Private Structure EditorTab
         Dim FilePath As String
         Dim IsModified As Boolean
@@ -21,6 +23,11 @@ Public Class Form1
     Private _isDark As Boolean = False
     Private _recentFiles As New List(Of String)
     Private _isLoadingFile As Boolean = False
+    Private _outputHeight As Integer = 200
+    Private _isDraggingOutput As Boolean = False
+    Private _dragStartY As Integer = 0
+    Private _dragStartH As Integer = 0
+    Private _runningProcess As System.Diagnostics.Process = Nothing
 
     Public Class TabButtonControl
         Inherits Control
@@ -161,8 +168,11 @@ Public Class Form1
                 LanguageManager.Instance.SyncLanguageMenuChecks(UILanguageToolStripMenuItem)
             End Sub)
         ApplyLanguage()
-
-        ApplyTheme()
+        If String.IsNullOrEmpty(My.Settings.themeset) Then
+            ApplyTheme()
+        Else
+            ApplyThemeByName(My.Settings.themeset)
+        End If
         LoadRecentFiles()
         NewTab()
         HandleCommandLineArgs()
@@ -171,10 +181,15 @@ Public Class Form1
         EditorHostPanel.AllowDrop = True
         ShowLineNumbersToolStripMenuItem.Checked = True
         ShowMinimapToolStripMenuItem.Checked = True
-        LightToolStripMenuItem.Checked = True
-        DarkToolStripMenuItem.Checked = False
         UpdateZoomStatus()
         AddHandler Me.Resize, AddressOf Form1_Resize
+        OutputPanelHeader.Cursor = Cursors.SizeNS
+        AddHandler OutputPanelHeader.MouseDown, AddressOf OutputHeader_MouseDown
+        AddHandler OutputPanelHeader.MouseMove, AddressOf OutputHeader_MouseMove
+        AddHandler OutputPanelHeader.MouseUp, AddressOf OutputHeader_MouseUp
+        AddHandler txtInput.KeyDown, AddressOf TxtInput_KeyDown
+        AddHandler btnSendInput.Click, AddressOf BtnSendInput_Click
+        AddHandler Me.MouseUp, AddressOf OutputHeader_MouseUp
         LayoutPanels()
     End Sub
 
@@ -223,10 +238,16 @@ Public Class Form1
         KeyboardShortcutsToolStripMenuItem.Text = L.Menu("KeyboardShortcuts")
         AboutToolStripMenuItem.Text = L.Menu("About")
 
+        RunToolStripMenuItem.Text = LanguageManager.Instance.Run("RunMenuTitle")
+        RunFileToolStripMenuItem.Text = LanguageManager.Instance.Run("RunFileMenuTitle")
+        RunSettingsToolStripMenuItem.Text = LanguageManager.Instance.Run("RunSettingsMenuTitle")
+        bRun.Text = LanguageManager.Instance.Run("RunButtonText")
+
         bNew.Text = L.Toolbar("New")
         bOpen.Text = L.Toolbar("Open")
         bSave.Text = L.Toolbar("Save")
         bFind.Text = L.Toolbar("Find")
+        bRun.Text = L.Menu("Run")
 
         lblFindFind.Text = L.FindPanel("FindLabel")
         lblFindReplace.Text = L.FindPanel("ReplaceLabel")
@@ -356,6 +377,7 @@ Public Class Form1
         UpdateStatusBar()
         UpdateTitleBar()
         UpdateTabTitles()
+        UpdateRunButtonState()
     End Sub
 
     Private Sub CloseTab(ByVal index As Integer)
@@ -560,6 +582,7 @@ Public Class Form1
                         _tabs(_activeIndex) = cur
                         UpdateTabTitles()
                         UpdateTitleBar()
+                        UpdateRunButtonState()
                         Return
                     End If
                 End If
@@ -585,8 +608,11 @@ Public Class Form1
             t.IsModified = False
             t.SavedCode = t.Editor.Code
             _tabs(index) = t
+            Dim ext = Path.GetExtension(t.FilePath).ToLower()
+            t.Editor.Language = GetLanguageFromExtension(ext)
             UpdateTabTitles()
             UpdateTitleBar()
+            UpdateStatusBar()
             Return True
         Catch ex As Exception
             MessageBox.Show(LanguageManager.Instance.Dlg("SaveFailed", vbCrLf, ex.Message),
@@ -612,9 +638,13 @@ Public Class Form1
                     t.IsModified = False
                     t.SavedCode = t.Editor.Code
                     _tabs(index) = t
+                    Dim newExt = Path.GetExtension(t.FilePath).ToLower()
+                    t.Editor.Language = GetLanguageFromExtension(newExt)
                     AddRecentFile(t.FilePath)
                     UpdateTabTitles()
                     UpdateTitleBar()
+                    UpdateStatusBar()
+                    UpdateRunButtonState()
                     Return True
                 Catch ex As Exception
                     MessageBox.Show(LanguageManager.Instance.Dlg("SaveFailed", vbCrLf, ex.Message),
@@ -741,6 +771,16 @@ Public Class Form1
             StyleFlatButton(btnReplace, Color.FromArgb(60, 60, 65), Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 90))
             StyleFlatButton(btnReplaceAll, Color.FromArgb(60, 60, 65), Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 90))
             StyleFlatButton(btnCloseFindPanel, Color.FromArgb(50, 50, 52), Color.FromArgb(180, 180, 180), Color.FromArgb(180, 60, 60))
+
+            OutputPanel.BackColor = Color.FromArgb(20, 20, 20)
+            OutputPanelHeader.BackColor = Color.FromArgb(37, 37, 38)
+            lblOutputTitle.ForeColor = Color.FromArgb(160, 160, 160)
+            txtOutput.BackColor = Color.FromArgb(12, 12, 12)
+            txtOutput.ForeColor = Color.FromArgb(204, 204, 204)
+            btnCloseOutput.ForeColor = Color.FromArgb(160, 160, 160)
+            btnCloseOutput.BackColor = Color.Transparent
+            btnClearOutput.ForeColor = Color.FromArgb(160, 160, 160)
+            btnClearOutput.BackColor = Color.Transparent
         Else
             Me.BackColor = Color.FromArgb(240, 240, 240)
             TabsPanel.BackColor = Color.FromArgb(213, 213, 213)
@@ -779,6 +819,16 @@ Public Class Form1
             StyleFlatButton(btnReplace, Color.FromArgb(200, 200, 205), Color.FromArgb(40, 40, 40), Color.FromArgb(170, 170, 180))
             StyleFlatButton(btnReplaceAll, Color.FromArgb(200, 200, 205), Color.FromArgb(40, 40, 40), Color.FromArgb(170, 170, 180))
             StyleFlatButton(btnCloseFindPanel, Color.FromArgb(215, 215, 220), Color.FromArgb(60, 60, 60), Color.FromArgb(200, 80, 80))
+
+            OutputPanel.BackColor = Color.FromArgb(245, 245, 248)
+            OutputPanelHeader.BackColor = Color.FromArgb(210, 210, 215)
+            lblOutputTitle.ForeColor = Color.FromArgb(60, 60, 60)
+            txtOutput.BackColor = Color.FromArgb(250, 250, 252)
+            txtOutput.ForeColor = Color.FromArgb(30, 30, 30)
+            btnCloseOutput.ForeColor = Color.FromArgb(80, 80, 80)
+            btnCloseOutput.BackColor = Color.Transparent
+            btnClearOutput.ForeColor = Color.FromArgb(80, 80, 80)
+            btnClearOutput.BackColor = Color.Transparent
         End If
 
         For i = 0 To _tabs.Count - 1
@@ -1019,6 +1069,8 @@ Public Class Form1
                 ToggleFindPanel() : Return True
             Case Keys.Control Or Keys.G
                 GoToLine() : Return True
+            Case Keys.F5
+                If bRun.Enabled Then RunCurrentFile() : Return True
             Case Keys.Control Or Keys.Tab
                 If _tabs.Count > 1 Then SwitchToTab((_activeIndex + 1) Mod _tabs.Count) : Return True
             Case Keys.Control Or Keys.Shift Or Keys.Tab
@@ -1133,7 +1185,10 @@ Public Class Form1
     End Sub
 
     Private Sub SetLanguage(ByVal lang As Object)
-        If _activeIndex >= 0 Then _tabs(_activeIndex).Editor.Language = lang
+        If _activeIndex >= 0 Then
+            _tabs(_activeIndex).Editor.Language = lang
+            UpdateRunButtonState()
+        End If
     End Sub
     Private Sub CppToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles CppToolStripMenuItem.Click
         SetLanguage(New CppLanguage())
@@ -1185,24 +1240,38 @@ Public Class Form1
 
     Private Sub DarkToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles DarkToolStripMenuItem.Click
         ApplyThemeByName("Dark")
+        My.Settings.themeset = "Dark"
+        My.Settings.Save()
     End Sub
     Private Sub LightToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles LightToolStripMenuItem.Click
         ApplyThemeByName("Light")
+        My.Settings.themeset = "Light"
+        My.Settings.Save()
     End Sub
     Private Sub MonokaiToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles MonokaiToolStripMenuItem.Click
         ApplyThemeByName("Monokai")
+        My.Settings.themeset = "Monokai"
+        My.Settings.Save()
     End Sub
     Private Sub DraculaToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles DraculaToolStripMenuItem.Click
         ApplyThemeByName("Dracula")
+        My.Settings.themeset = "Dracula"
+        My.Settings.Save()
     End Sub
     Private Sub NordToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles NordToolStripMenuItem.Click
         ApplyThemeByName("Nord")
+        My.Settings.themeset = "Nord"
+        My.Settings.Save()
     End Sub
     Private Sub SolarizedDarkToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles SolarizedDarkToolStripMenuItem.Click
         ApplyThemeByName("Solarized Dark")
+        My.Settings.themeset = "Solarized Dark"
+        My.Settings.Save()
     End Sub
     Private Sub SolarizedLightToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles SolarizedLightToolStripMenuItem.Click
         ApplyThemeByName("Solarized Light")
+        My.Settings.themeset = "Solarized Light"
+        My.Settings.Save()
     End Sub
 
     Private Sub AboutToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles AboutToolStripMenuItem.Click
@@ -1210,16 +1279,6 @@ Public Class Form1
     End Sub
 
     Private Sub KeyboardShortcutsToolStripMenuItem_Click(ByVal s As Object, ByVal e As EventArgs) Handles KeyboardShortcutsToolStripMenuItem.Click
-        Dim L = LanguageManager.Instance
-        frmKeyboard.Text = L.KbShortcut("Title")
-
-        Dim content As String = L.KbShortcut("Content")
-
-        content = content.Replace("{0}", Environment.NewLine)
-
-        frmKeyboard.TextBox1.Font = New Font("Consolas", 10)
-        frmKeyboard.TextBox1.Text = content
-
         frmKeyboard.ShowDialog()
     End Sub
 
@@ -1322,13 +1381,461 @@ Public Class Form1
         Next
     End Sub
 
+    Private Delegate Sub OpenFileDelegate(ByVal filePath As String)
+
     Public Sub OpenFileFromArgs(ByVal filePath As String)
         If Me.InvokeRequired Then
-            Me.Invoke(New Action(Of String)(AddressOf OpenFileFromArgs), filePath)
+            Me.Invoke(New OpenFileDelegate(AddressOf OpenFileFromArgs), filePath)
             Return
         End If
         OpenFileInTab(filePath)
     End Sub
 
-   
+    Private Function GetRunMode(ByVal ext As String) As String
+        Select Case ext.ToLower()
+            Case ".html", ".htm" : Return "browser"
+            Case ".py"           : Return "python"
+            Case ".cpp", ".c", ".cc", ".h" : Return "cpp"
+            Case ".js"           : Return "node"
+            Case ".rb"           : Return "ruby"
+            Case ".java"         : Return "java"
+            Case Else : Return ""
+        End Select
+    End Function
+
+    Private Sub UpdateRunButtonState()
+        Dim canRun As Boolean = False
+        Dim tipText As String = LanguageManager.Instance.Run("TipRunDefault")
+
+        If _activeIndex >= 0 AndAlso _activeIndex < _tabs.Count Then
+            Dim t = _tabs(_activeIndex)
+            Dim ext As String = ""
+            If t.FilePath <> "" Then
+                ext = Path.GetExtension(t.FilePath).ToLower()
+            End If
+            Dim mode = GetRunMode(ext)
+            canRun = (mode <> "")
+
+            If canRun Then
+                Select Case mode
+                    Case "browser"
+                        tipText = LanguageManager.Instance.Run("TipRunBrowser")
+                    Case "python"
+                        tipText = LanguageManager.Instance.Run("TipRunPython")
+                    Case "cpp"
+                        tipText = LanguageManager.Instance.Run("TipRunCpp")
+                    Case "node"
+                        tipText = LanguageManager.Instance.Run("TipRunNode")
+                    Case "ruby"
+                        tipText = LanguageManager.Instance.Run("TipRunRuby")
+                    Case "java"
+                        tipText = LanguageManager.Instance.Run("TipRunJava")
+                End Select
+            End If
+        End If
+
+        bRun.Enabled = canRun
+        RunFileToolStripMenuItem.Enabled = canRun
+        bRun.ToolTipText = tipText
+    End Sub
+
+    Private Sub RunCurrentFile()
+        If _activeIndex < 0 OrElse _activeIndex >= _tabs.Count Then Return
+        Dim t = _tabs(_activeIndex)
+
+        If t.FilePath = "" OrElse t.IsModified Then
+            Dim ans = MessageBox.Show(LanguageManager.Instance.Run("SaveBeforeRun"),
+                                     LanguageManager.Instance.Run("SaveBeforeRunTitle"), MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+            If ans = DialogResult.Yes Then
+                If Not SaveTab(_activeIndex) Then Return
+            Else
+                Return
+            End If
+        End If
+
+        txtOutput.Clear()
+        ShowOutputPanel()
+
+        t = _tabs(_activeIndex)
+        Dim ext = Path.GetExtension(t.FilePath).ToLower()
+        Dim mode = GetRunMode(ext)
+
+        Select Case mode
+            Case "browser"
+                RunHtmlInBrowser(t.FilePath)
+            Case "python"
+                RunWithRuntime(t.FilePath, My.Settings.PythonPath, "python", "--version")
+            Case "cpp"
+                RunCpp(t.FilePath)
+            Case "node"
+                RunWithRuntime(t.FilePath, My.Settings.NodePath, "node", "--version")
+            Case "ruby"
+                RunWithRuntime(t.FilePath, My.Settings.RubyPath, "ruby", "--version")
+            Case "java"
+                RunJava(t.FilePath)
+            Case Else
+                MessageBox.Show(LanguageManager.Instance.Run("UnsupportedRun"), LanguageManager.Instance.Run("UnsupportedRunTitle"), MessageBoxButtons.OK, MessageBoxIcon.Information)
+        End Select
+    End Sub
+
+    Private Sub RunHtmlInBrowser(ByVal filePath As String)
+        Try
+            System.Diagnostics.Process.Start(filePath)
+        Catch ex As Exception
+            MessageBox.Show(LanguageManager.Instance.Run("BrowserFailed", ex.Message), LanguageManager.Instance.Run("BrowserFailedTitle"), MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Sub RunWithRuntime(ByVal filePath As String, ByVal runtimePath As String,
+                               ByVal defaultExe As String, ByVal testArg As String)
+        Dim exe As String = runtimePath
+        If String.IsNullOrEmpty(exe) Then exe = defaultExe
+
+        If Not IsRuntimeAvailable(exe, testArg) Then
+            MessageBox.Show(LanguageManager.Instance.Run("RuntimeNotFound", exe, Environment.NewLine),
+                            LanguageManager.Instance.Run("RuntimeNotFoundTitle"), MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        AppendOutput(LanguageManager.Instance.Run("MsgRunning", exe, filePath, Environment.NewLine), Color.FromArgb(100, 180, 255))
+        ShowOutputPanel()
+
+        Dim psi As New System.Diagnostics.ProcessStartInfo()
+        psi.FileName = exe
+        Dim isPython As Boolean = (defaultExe = "python" OrElse defaultExe = "python3")
+        ' Paksa stdout write-through agar prompt input() langsung tampil walau di-redirect
+        Dim wrapperCode As String = "import sys, io; sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', line_buffering=False, write_through=True); exec(open(r'" & filePath.Replace("\", "\\") & "').read())"
+        psi.Arguments = If(isPython, "-u -c """ & wrapperCode & """", """" & filePath & """")
+        psi.UseShellExecute = False
+        psi.RedirectStandardOutput = True
+        psi.RedirectStandardError = True
+        psi.CreateNoWindow = True
+        psi.StandardOutputEncoding = System.Text.Encoding.UTF8
+        psi.StandardErrorEncoding = System.Text.Encoding.UTF8
+        psi.WorkingDirectory = Path.GetDirectoryName(filePath)
+
+        LaunchProcess(psi)
+    End Sub
+
+    Private Sub RunCpp(ByVal filePath As String)
+        Dim compilerPath As String = My.Settings.CppPath
+        If String.IsNullOrEmpty(compilerPath) Then compilerPath = "g++"
+
+        If Not IsRuntimeAvailable(compilerPath, "--version") Then
+            MessageBox.Show(LanguageManager.Instance.Run("CompilerNotFound", compilerPath, Environment.NewLine),
+                            LanguageManager.Instance.Run("CompilerNotFoundTitle"), MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        ShowOutputPanel()
+        Dim outExe As String = Path.Combine(Path.GetDirectoryName(filePath),
+                                            Path.GetFileNameWithoutExtension(filePath) & ".exe")
+
+        AppendOutput(LanguageManager.Instance.Run("MsgCompilingCpp", compilerPath, outExe, filePath, Environment.NewLine), Color.FromArgb(100, 180, 255))
+
+        Dim psiCompile As New System.Diagnostics.ProcessStartInfo()
+        psiCompile.FileName = compilerPath
+        psiCompile.Arguments = String.Format("-o ""{0}"" ""{1}""", outExe, filePath)
+        psiCompile.UseShellExecute = False
+        psiCompile.RedirectStandardOutput = True
+        psiCompile.RedirectStandardError = True
+        psiCompile.CreateNoWindow = True
+        psiCompile.WorkingDirectory = Path.GetDirectoryName(filePath)
+
+        Try
+            Dim pCompile As New System.Diagnostics.Process()
+            pCompile.StartInfo = psiCompile
+            pCompile.Start()
+            Dim errOut = pCompile.StandardError.ReadToEnd()
+            Dim stdOut = pCompile.StandardOutput.ReadToEnd()
+            pCompile.WaitForExit()
+
+            If stdOut <> "" Then AppendOutput(stdOut, Color.FromArgb(204, 204, 204))
+            If errOut <> "" Then AppendOutput(errOut, Color.FromArgb(255, 100, 100))
+
+            If pCompile.ExitCode <> 0 Then
+                AppendOutput(LanguageManager.Instance.Run("MsgCompilationFailed", pCompile.ExitCode, Environment.NewLine), Color.FromArgb(255, 100, 100))
+                Return
+            End If
+
+            AppendOutput(LanguageManager.Instance.Run("MsgCompilationOK", Environment.NewLine), Color.FromArgb(100, 220, 100))
+        Catch ex As Exception
+            AppendOutput(LanguageManager.Instance.Run("MsgCompileError", ex.Message, Environment.NewLine), Color.FromArgb(255, 100, 100))
+            Return
+        End Try
+
+        Dim psiRun As New System.Diagnostics.ProcessStartInfo()
+        psiRun.FileName = outExe
+        psiRun.UseShellExecute = False
+        psiRun.RedirectStandardOutput = True
+        psiRun.RedirectStandardError = True
+        psiRun.CreateNoWindow = True
+        psiRun.WorkingDirectory = Path.GetDirectoryName(filePath)
+        LaunchProcess(psiRun)
+    End Sub
+
+    Private Sub RunJava(ByVal filePath As String)
+        Dim javaPath As String = My.Settings.JavaPath
+        If String.IsNullOrEmpty(javaPath) Then javaPath = "java"
+        Dim javacPath As String = If(String.IsNullOrEmpty(My.Settings.JavaPath),
+                                    "javac",
+                                    Path.Combine(Path.GetDirectoryName(My.Settings.JavaPath), "javac.exe"))
+
+        If Not IsRuntimeAvailable(javacPath, "-version") Then
+            MessageBox.Show(LanguageManager.Instance.Run("JdkNotFound", javacPath, Environment.NewLine),
+                            LanguageManager.Instance.Run("JdkNotFoundTitle"), MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        ShowOutputPanel()
+        Dim dir = Path.GetDirectoryName(filePath)
+
+        AppendOutput(LanguageManager.Instance.Run("MsgCompiling", javacPath, filePath, Environment.NewLine),
+                     Color.FromArgb(100, 180, 255))
+
+        Dim psiC As New System.Diagnostics.ProcessStartInfo()
+        psiC.FileName = javacPath
+        psiC.Arguments = """" & filePath & """"
+        psiC.UseShellExecute = False
+        psiC.RedirectStandardOutput = True
+        psiC.RedirectStandardError = True
+        psiC.CreateNoWindow = True
+        psiC.WorkingDirectory = dir
+
+        Try
+            Dim pc As New System.Diagnostics.Process()
+            pc.StartInfo = psiC
+            pc.Start()
+            Dim errOut = pc.StandardError.ReadToEnd()
+            pc.WaitForExit()
+            If errOut <> "" Then AppendOutput(errOut, Color.FromArgb(255, 100, 100))
+            If pc.ExitCode <> 0 Then
+                AppendOutput(LanguageManager.Instance.Run("MsgCompilationFailedShort", Environment.NewLine), Color.FromArgb(255, 100, 100))
+                Return
+            End If
+            AppendOutput(LanguageManager.Instance.Run("MsgCompilationOK", Environment.NewLine), Color.FromArgb(100, 220, 100))
+        Catch ex As Exception
+            AppendOutput(LanguageManager.Instance.Run("MsgCompileError", ex.Message, Environment.NewLine), Color.FromArgb(255, 100, 100))
+            Return
+        End Try
+
+        Dim className = Path.GetFileNameWithoutExtension(filePath)
+        Dim psiRun As New System.Diagnostics.ProcessStartInfo()
+        psiRun.FileName = javaPath
+        psiRun.Arguments = "-cp """ & dir & """ " & className
+        psiRun.UseShellExecute = False
+        psiRun.RedirectStandardOutput = True
+        psiRun.RedirectStandardError = True
+        psiRun.CreateNoWindow = True
+        psiRun.WorkingDirectory = dir
+        LaunchProcess(psiRun)
+    End Sub
+
+    Private Sub LaunchProcess(ByVal psi As System.Diagnostics.ProcessStartInfo)
+        Try
+            If _runningProcess IsNot Nothing Then
+                Try
+                    If Not _runningProcess.HasExited Then _runningProcess.Kill()
+                Catch
+                End Try
+                _runningProcess = Nothing
+            End If
+
+            psi.EnvironmentVariables("PYTHONUNBUFFERED") = "1"
+            psi.EnvironmentVariables("PYTHONIOENCODING") = "utf-8"
+            psi.RedirectStandardInput = True
+
+            Dim p As New System.Diagnostics.Process()
+            p.StartInfo = psi
+            p.EnableRaisingEvents = True
+
+            AddHandler p.ErrorDataReceived, Sub(s2, ev)
+                If ev.Data IsNot Nothing Then
+                    AppendOutput(ev.Data & Environment.NewLine, Color.FromArgb(255, 130, 130))
+                End If
+            End Sub
+            AddHandler p.Exited, Sub(s2, ev)
+                                     AppendOutput(LanguageManager.Instance.Run("MsgProcessExited",
+                                                  Environment.NewLine, p.ExitCode, Environment.NewLine),
+                                                  If(p.ExitCode = 0,
+                                                     Color.FromArgb(100, 220, 100),
+                                                     Color.FromArgb(255, 100, 100)))
+                                     _runningProcess = Nothing
+
+                                     If pnlInputBar.InvokeRequired Then
+                                         pnlInputBar.Invoke(New MethodInvoker(Sub()
+                                                                                  pnlInputBar.Visible = False
+                                                                                  txtInput.Text = ""
+                                                                              End Sub))
+                                     Else
+                                         pnlInputBar.Visible = False
+                                         txtInput.Text = ""
+                                     End If
+                                 End Sub
+
+            p.Start()
+            p.BeginErrorReadLine()
+            _runningProcess = p
+
+            ' Baca stdout karakter per karakter agar prompt tanpa newline langsung tampil
+            ' Menggunakan Thread biasa agar kompatibel dengan .NET Framework 2.0
+            Dim stdoutThread As New System.Threading.Thread(
+                Sub()
+                    Dim buf(0) As Char
+                    Dim sb As New System.Text.StringBuilder()
+                    Dim reader As System.IO.StreamReader = p.StandardOutput
+                    While True
+                        Dim n As Integer = reader.Read(buf, 0, 1)
+                        If n = 0 Then
+                            If sb.Length > 0 Then
+                                Dim s As String = sb.ToString()
+                                sb.Length = 0
+                                AppendOutput(s, Color.FromArgb(204, 204, 204))
+                            End If
+                            Exit While
+                        End If
+                        sb.Append(buf(0))
+                        ' Flush setiap newline atau buffer >= 256 karakter
+                        If buf(0) = Chr(10) OrElse sb.Length >= 256 Then
+                            Dim s As String = sb.ToString()
+                            sb.Length = 0
+                            AppendOutput(s, Color.FromArgb(204, 204, 204))
+                        End If
+                    End While
+                End Sub)
+            stdoutThread.IsBackground = True
+            stdoutThread.Start()
+
+            pnlInputBar.Visible = True
+            txtInput.Text = ""
+            txtInput.Focus()
+
+        Catch ex As Exception
+            AppendOutput(LanguageManager.Instance.Run("MsgError", ex.Message, Environment.NewLine), Color.FromArgb(255, 100, 100))
+        End Try
+    End Sub
+
+    Private Function IsRuntimeAvailable(ByVal exe As String, ByVal testArg As String) As Boolean
+        Try
+            Dim psi As New System.Diagnostics.ProcessStartInfo(exe, testArg)
+            psi.UseShellExecute = False
+            psi.RedirectStandardOutput = True
+            psi.RedirectStandardError = True
+            psi.CreateNoWindow = True
+            Dim p = System.Diagnostics.Process.Start(psi)
+            p.WaitForExit(3000)
+            Return True
+        Catch
+            Return False
+        End Try
+    End Function
+
+    Private Sub ShowOutputPanel()
+        If Not OutputPanel.Visible Then
+            OutputPanel.Visible = True
+        End If
+        OutputPanel.BringToFront()
+        StatusStrip1.BringToFront()
+        LayoutPanels()
+    End Sub
+
+    Private Sub AppendOutput(ByVal text As String, ByVal color As Color)
+        If txtOutput.InvokeRequired Then
+            txtOutput.Invoke(New AppendOutputDelegate(AddressOf AppendOutput), text, color)
+            Return
+        End If
+        Dim isFirst As Boolean = (txtOutput.TextLength = 0)
+        txtOutput.SelectionStart = txtOutput.TextLength
+        txtOutput.SelectionLength = 0
+        txtOutput.SelectionColor = color
+        txtOutput.AppendText(text)
+        If isFirst Then
+            txtOutput.SelectionStart = 0
+            txtOutput.ScrollToCaret()
+        Else
+            txtOutput.SelectionStart = txtOutput.TextLength
+            txtOutput.ScrollToCaret()
+        End If
+    End Sub
+
+    Private Sub btnCloseOutput_Click(ByVal sender As Object, ByVal e As EventArgs) Handles btnCloseOutput.Click
+        OutputPanel.Visible = False
+        LayoutPanels()
+    End Sub
+
+    Private Sub btnClearOutput_Click(ByVal sender As Object, ByVal e As EventArgs) Handles btnClearOutput.Click
+        txtOutput.Clear()
+    End Sub
+
+    Private Sub OutputHeader_MouseDown(ByVal sender As Object, ByVal e As MouseEventArgs)
+        If e.Button = MouseButtons.Left Then
+            _isDraggingOutput = True
+            _dragStartY = OutputPanelHeader.PointToScreen(e.Location).Y
+            _dragStartH = _outputHeight
+            OutputPanelHeader.Capture = True
+        End If
+    End Sub
+
+    Private Sub OutputHeader_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs)
+        If _isDraggingOutput Then
+            Dim currentY As Integer = OutputPanelHeader.PointToScreen(e.Location).Y
+            Dim delta As Integer = _dragStartY - currentY
+            _outputHeight = Math.Max(80, Math.Min(_dragStartH + delta, Me.ClientSize.Height - 150))
+            LayoutPanels()
+        End If
+    End Sub
+
+    Private Sub OutputHeader_MouseUp(ByVal sender As Object, ByVal e As MouseEventArgs)
+        If _isDraggingOutput Then
+            _isDraggingOutput = False
+            OutputPanelHeader.Capture = False
+        End If
+    End Sub
+
+    Private Sub TxtInput_KeyDown(ByVal sender As Object, ByVal e As KeyEventArgs)
+        If e.KeyCode = Keys.Return Then
+            e.SuppressKeyPress = True
+            SendInputToProcess()
+        ElseIf e.Control AndAlso e.KeyCode = Keys.C Then
+            Try
+                If _runningProcess IsNot Nothing AndAlso Not _runningProcess.HasExited Then
+                    _runningProcess.Kill()
+                End If
+            Catch
+            End Try
+            e.SuppressKeyPress = True
+        End If
+    End Sub
+
+    Private Sub BtnSendInput_Click(ByVal sender As Object, ByVal e As EventArgs)
+        SendInputToProcess()
+    End Sub
+
+    Private Sub SendInputToProcess()
+        If _runningProcess Is Nothing OrElse _runningProcess.HasExited Then Return
+        Dim inputText As String = txtInput.Text
+        AppendOutput("> " & inputText & Environment.NewLine, Color.FromArgb(255, 220, 80))
+        txtInput.Text = ""
+        txtInput.Focus()
+        Try
+            _runningProcess.StandardInput.WriteLine(inputText)
+            _runningProcess.StandardInput.Flush()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub RunFileToolStripMenuItem_Click(ByVal sender As Object, ByVal e As EventArgs) Handles RunFileToolStripMenuItem.Click
+        RunCurrentFile()
+    End Sub
+
+    Private Sub bRun_Click(ByVal sender As Object, ByVal e As EventArgs) Handles bRun.Click
+        RunCurrentFile()
+    End Sub
+
+    Private Sub RunSettingsToolStripMenuItem_Click(ByVal sender As Object, ByVal e As EventArgs) Handles RunSettingsToolStripMenuItem.Click
+        Using dlg As New frmRunSettings()
+            dlg.ShowDialog(Me)
+        End Using
+    End Sub
+
 End Class

@@ -18,6 +18,23 @@ Partial Class Form1
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
+        Me.ttOutput = New System.Windows.Forms.ToolTip(Me.components)
+        Me.btnClearOutput = New System.Windows.Forms.Button()
+        Me.RunToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.RunFileToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.SepRun1 = New System.Windows.Forms.ToolStripSeparator()
+        Me.RunSettingsToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.bRun = New System.Windows.Forms.ToolStripButton()
+        Me.ToolStripSeparator3 = New System.Windows.Forms.ToolStripSeparator()
+        Me.OutputPanel = New System.Windows.Forms.Panel()
+        Me.txtOutput = New System.Windows.Forms.RichTextBox()
+        Me.OutputPanelHeader = New System.Windows.Forms.Panel()
+        Me.lblOutputTitle = New System.Windows.Forms.Label()
+        Me.btnCloseOutput = New System.Windows.Forms.Button()
+        Me.pnlInputBar = New System.Windows.Forms.Panel()
+        Me.lblInputPrompt = New System.Windows.Forms.Label()
+        Me.txtInput = New System.Windows.Forms.TextBox()
+        Me.btnSendInput = New System.Windows.Forms.Button()
         Me.MenuStrip1 = New System.Windows.Forms.MenuStrip()
         Me.FileToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.NewFileToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
@@ -48,6 +65,7 @@ Partial Class Form1
         Me.ViewToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.WordWrapToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.ShowLineNumbersToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ShowMinimapToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.LanguageToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.PlainTextToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.CppToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
@@ -64,14 +82,13 @@ Partial Class Form1
         Me.VBToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.XMLToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.ThemesToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
-        Me.DarkToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.LightToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.DarkToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.MonokaiToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.DraculaToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.NordToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.SolarizedDarkToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.SolarizedLightToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
-        Me.ShowMinimapToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.UILanguageToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.HelpToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.KeyboardShortcutsToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
@@ -111,6 +128,9 @@ Partial Class Form1
         Me.btnScrollRight = New System.Windows.Forms.Button()
         Me.tmrModifiedCheck = New System.Windows.Forms.Timer(Me.components)
         Me.NewToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.OutputPanel.SuspendLayout()
+        Me.OutputPanelHeader.SuspendLayout()
+        Me.pnlInputBar.SuspendLayout()
         Me.MenuStrip1.SuspendLayout()
         Me.ToolBarPanel.SuspendLayout()
         Me.ToolStrip1.SuspendLayout()
@@ -118,11 +138,182 @@ Partial Class Form1
         Me.StatusStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
+        'btnClearOutput
+        '
+        Me.btnClearOutput.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.btnClearOutput.BackColor = System.Drawing.Color.Transparent
+        Me.btnClearOutput.FlatAppearance.BorderSize = 0
+        Me.btnClearOutput.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.btnClearOutput.ForeColor = System.Drawing.Color.FromArgb(CType(CType(160, Byte), Integer), CType(CType(160, Byte), Integer), CType(CType(160, Byte), Integer))
+        Me.btnClearOutput.Location = New System.Drawing.Point(1040, 2)
+        Me.btnClearOutput.Name = "btnClearOutput"
+        Me.btnClearOutput.Size = New System.Drawing.Size(28, 22)
+        Me.btnClearOutput.TabIndex = 1
+        Me.btnClearOutput.Text = "🗑"
+        Me.ttOutput.SetToolTip(Me.btnClearOutput, "Clear Output")
+        Me.btnClearOutput.UseVisualStyleBackColor = False
+        '
+        'RunToolStripMenuItem
+        '
+        Me.RunToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.RunFileToolStripMenuItem, Me.SepRun1, Me.RunSettingsToolStripMenuItem})
+        Me.RunToolStripMenuItem.ForeColor = System.Drawing.Color.Black
+        Me.RunToolStripMenuItem.Name = "RunToolStripMenuItem"
+        Me.RunToolStripMenuItem.Size = New System.Drawing.Size(40, 20)
+        Me.RunToolStripMenuItem.Text = "&Run"
+        '
+        'RunFileToolStripMenuItem
+        '
+        Me.RunFileToolStripMenuItem.Enabled = False
+        Me.RunFileToolStripMenuItem.Name = "RunFileToolStripMenuItem"
+        Me.RunFileToolStripMenuItem.ShortcutKeyDisplayString = "F5"
+        Me.RunFileToolStripMenuItem.Size = New System.Drawing.Size(149, 22)
+        Me.RunFileToolStripMenuItem.Text = "&Run File"
+        '
+        'SepRun1
+        '
+        Me.SepRun1.Name = "SepRun1"
+        Me.SepRun1.Size = New System.Drawing.Size(146, 6)
+        '
+        'RunSettingsToolStripMenuItem
+        '
+        Me.RunSettingsToolStripMenuItem.Name = "RunSettingsToolStripMenuItem"
+        Me.RunSettingsToolStripMenuItem.Size = New System.Drawing.Size(149, 22)
+        Me.RunSettingsToolStripMenuItem.Text = "Run &Settings..."
+        '
+        'bRun
+        '
+        Me.bRun.Enabled = False
+        Me.bRun.ForeColor = System.Drawing.Color.FromArgb(CType(CType(80, Byte), Integer), CType(CType(200, Byte), Integer), CType(CType(80, Byte), Integer))
+        Me.bRun.ImageTransparentColor = System.Drawing.Color.Magenta
+        Me.bRun.Name = "bRun"
+        Me.bRun.Size = New System.Drawing.Size(45, 22)
+        Me.bRun.Text = "▶ Run"
+        Me.bRun.ToolTipText = "Run File (F5)"
+        '
+        'ToolStripSeparator3
+        '
+        Me.ToolStripSeparator3.Name = "ToolStripSeparator3"
+        Me.ToolStripSeparator3.Size = New System.Drawing.Size(6, 25)
+        '
+        'OutputPanel
+        '
+        Me.OutputPanel.BackColor = System.Drawing.Color.FromArgb(CType(CType(20, Byte), Integer), CType(CType(20, Byte), Integer), CType(CType(20, Byte), Integer))
+        Me.OutputPanel.Controls.Add(Me.txtOutput)
+        Me.OutputPanel.Controls.Add(Me.OutputPanelHeader)
+        Me.OutputPanel.Controls.Add(Me.pnlInputBar)
+        Me.OutputPanel.Location = New System.Drawing.Point(0, 500)
+        Me.OutputPanel.Name = "OutputPanel"
+        Me.OutputPanel.Size = New System.Drawing.Size(1100, 150)
+        Me.OutputPanel.TabIndex = 10
+        Me.OutputPanel.Visible = False
+        '
+        'txtOutput
+        '
+        Me.txtOutput.BackColor = System.Drawing.Color.FromArgb(CType(CType(12, Byte), Integer), CType(CType(12, Byte), Integer), CType(CType(12, Byte), Integer))
+        Me.txtOutput.BorderStyle = System.Windows.Forms.BorderStyle.None
+        Me.txtOutput.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.txtOutput.Font = New System.Drawing.Font("Consolas", 9.0!)
+        Me.txtOutput.ForeColor = System.Drawing.Color.FromArgb(CType(CType(204, Byte), Integer), CType(CType(204, Byte), Integer), CType(CType(204, Byte), Integer))
+        Me.txtOutput.Location = New System.Drawing.Point(0, 26)
+        Me.txtOutput.Name = "txtOutput"
+        Me.txtOutput.ReadOnly = True
+        Me.txtOutput.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical
+        Me.txtOutput.Size = New System.Drawing.Size(1100, 92)
+        Me.txtOutput.TabIndex = 1
+        Me.txtOutput.Text = ""
+        '
+        'OutputPanelHeader
+        '
+        Me.OutputPanelHeader.BackColor = System.Drawing.Color.FromArgb(CType(CType(37, Byte), Integer), CType(CType(37, Byte), Integer), CType(CType(38, Byte), Integer))
+        Me.OutputPanelHeader.Controls.Add(Me.lblOutputTitle)
+        Me.OutputPanelHeader.Controls.Add(Me.btnClearOutput)
+        Me.OutputPanelHeader.Controls.Add(Me.btnCloseOutput)
+        Me.OutputPanelHeader.Dock = System.Windows.Forms.DockStyle.Top
+        Me.OutputPanelHeader.Location = New System.Drawing.Point(0, 0)
+        Me.OutputPanelHeader.Name = "OutputPanelHeader"
+        Me.OutputPanelHeader.Size = New System.Drawing.Size(1100, 26)
+        Me.OutputPanelHeader.TabIndex = 0
+        '
+        'lblOutputTitle
+        '
+        Me.lblOutputTitle.AutoSize = True
+        Me.lblOutputTitle.Font = New System.Drawing.Font("Segoe UI", 8.25!, System.Drawing.FontStyle.Bold)
+        Me.lblOutputTitle.ForeColor = System.Drawing.Color.FromArgb(CType(CType(180, Byte), Integer), CType(CType(180, Byte), Integer), CType(CType(180, Byte), Integer))
+        Me.lblOutputTitle.Location = New System.Drawing.Point(6, 5)
+        Me.lblOutputTitle.Name = "lblOutputTitle"
+        Me.lblOutputTitle.Size = New System.Drawing.Size(50, 13)
+        Me.lblOutputTitle.TabIndex = 0
+        Me.lblOutputTitle.Text = "OUTPUT"
+        '
+        'btnCloseOutput
+        '
+        Me.btnCloseOutput.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.btnCloseOutput.BackColor = System.Drawing.Color.Transparent
+        Me.btnCloseOutput.FlatAppearance.BorderSize = 0
+        Me.btnCloseOutput.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.btnCloseOutput.ForeColor = System.Drawing.Color.FromArgb(CType(CType(160, Byte), Integer), CType(CType(160, Byte), Integer), CType(CType(160, Byte), Integer))
+        Me.btnCloseOutput.Location = New System.Drawing.Point(1072, 2)
+        Me.btnCloseOutput.Name = "btnCloseOutput"
+        Me.btnCloseOutput.Size = New System.Drawing.Size(22, 22)
+        Me.btnCloseOutput.TabIndex = 2
+        Me.btnCloseOutput.Text = "×"
+        Me.btnCloseOutput.UseVisualStyleBackColor = False
+        '
+        'pnlInputBar
+        '
+        Me.pnlInputBar.BackColor = System.Drawing.Color.FromArgb(CType(CType(28, Byte), Integer), CType(CType(28, Byte), Integer), CType(CType(30, Byte), Integer))
+        Me.pnlInputBar.Controls.Add(Me.lblInputPrompt)
+        Me.pnlInputBar.Controls.Add(Me.txtInput)
+        Me.pnlInputBar.Controls.Add(Me.btnSendInput)
+        Me.pnlInputBar.Dock = System.Windows.Forms.DockStyle.Bottom
+        Me.pnlInputBar.Location = New System.Drawing.Point(0, 118)
+        Me.pnlInputBar.Name = "pnlInputBar"
+        Me.pnlInputBar.Size = New System.Drawing.Size(1100, 32)
+        Me.pnlInputBar.TabIndex = 1
+        Me.pnlInputBar.Visible = False
+        '
+        'lblInputPrompt
+        '
+        Me.lblInputPrompt.Font = New System.Drawing.Font("Consolas", 10.0!, System.Drawing.FontStyle.Bold)
+        Me.lblInputPrompt.ForeColor = System.Drawing.Color.FromArgb(CType(CType(100, Byte), Integer), CType(CType(220, Byte), Integer), CType(CType(100, Byte), Integer))
+        Me.lblInputPrompt.Location = New System.Drawing.Point(0, 0)
+        Me.lblInputPrompt.Name = "lblInputPrompt"
+        Me.lblInputPrompt.Size = New System.Drawing.Size(36, 32)
+        Me.lblInputPrompt.TabIndex = 0
+        Me.lblInputPrompt.Text = " >"
+        Me.lblInputPrompt.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+        '
+        'txtInput
+        '
+        Me.txtInput.BackColor = System.Drawing.Color.FromArgb(CType(CType(28, Byte), Integer), CType(CType(28, Byte), Integer), CType(CType(30, Byte), Integer))
+        Me.txtInput.BorderStyle = System.Windows.Forms.BorderStyle.None
+        Me.txtInput.Font = New System.Drawing.Font("Consolas", 10.0!)
+        Me.txtInput.ForeColor = System.Drawing.Color.FromArgb(CType(CType(220, Byte), Integer), CType(CType(220, Byte), Integer), CType(CType(220, Byte), Integer))
+        Me.txtInput.Location = New System.Drawing.Point(36, 6)
+        Me.txtInput.Name = "txtInput"
+        Me.txtInput.Size = New System.Drawing.Size(900, 16)
+        Me.txtInput.TabIndex = 0
+        '
+        'btnSendInput
+        '
+        Me.btnSendInput.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.btnSendInput.BackColor = System.Drawing.Color.FromArgb(CType(CType(0, Byte), Integer), CType(CType(122, Byte), Integer), CType(CType(204, Byte), Integer))
+        Me.btnSendInput.FlatAppearance.BorderSize = 0
+        Me.btnSendInput.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.btnSendInput.Font = New System.Drawing.Font("Segoe UI", 8.25!, System.Drawing.FontStyle.Bold)
+        Me.btnSendInput.ForeColor = System.Drawing.Color.White
+        Me.btnSendInput.Location = New System.Drawing.Point(1840, 4)
+        Me.btnSendInput.Name = "btnSendInput"
+        Me.btnSendInput.Size = New System.Drawing.Size(80, 24)
+        Me.btnSendInput.TabIndex = 1
+        Me.btnSendInput.Text = "Send ↵"
+        Me.btnSendInput.UseVisualStyleBackColor = False
+        '
         'MenuStrip1
         '
         Me.MenuStrip1.BackColor = System.Drawing.Color.FromArgb(CType(CType(240, Byte), Integer), CType(CType(240, Byte), Integer), CType(CType(240, Byte), Integer))
         Me.MenuStrip1.ForeColor = System.Drawing.Color.Black
-        Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.FileToolStripMenuItem, Me.EditToolStripMenuItem, Me.ViewToolStripMenuItem, Me.LanguageToolStripMenuItem, Me.ThemesToolStripMenuItem, Me.UILanguageToolStripMenuItem, Me.HelpToolStripMenuItem})
+        Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.FileToolStripMenuItem, Me.EditToolStripMenuItem, Me.ViewToolStripMenuItem, Me.LanguageToolStripMenuItem, Me.ThemesToolStripMenuItem, Me.UILanguageToolStripMenuItem, Me.RunToolStripMenuItem, Me.HelpToolStripMenuItem})
         Me.MenuStrip1.Location = New System.Drawing.Point(0, 0)
         Me.MenuStrip1.Name = "MenuStrip1"
         Me.MenuStrip1.RenderMode = System.Windows.Forms.ToolStripRenderMode.System
@@ -416,7 +607,7 @@ Partial Class Form1
         '
         'ThemesToolStripMenuItem
         '
-        Me.ThemesToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.LightToolStripMenuItem, Me.DarkToolStripMenuItem, New System.Windows.Forms.ToolStripSeparator(), Me.MonokaiToolStripMenuItem, Me.DraculaToolStripMenuItem, Me.NordToolStripMenuItem, New System.Windows.Forms.ToolStripSeparator(), Me.SolarizedDarkToolStripMenuItem, Me.SolarizedLightToolStripMenuItem})
+        Me.ThemesToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.LightToolStripMenuItem, Me.DarkToolStripMenuItem, Me.MonokaiToolStripMenuItem, Me.DraculaToolStripMenuItem, Me.NordToolStripMenuItem, Me.SolarizedDarkToolStripMenuItem, Me.SolarizedLightToolStripMenuItem})
         Me.ThemesToolStripMenuItem.ForeColor = System.Drawing.Color.Black
         Me.ThemesToolStripMenuItem.Name = "ThemesToolStripMenuItem"
         Me.ThemesToolStripMenuItem.Size = New System.Drawing.Size(60, 20)
@@ -424,46 +615,44 @@ Partial Class Form1
         '
         'LightToolStripMenuItem
         '
-        Me.LightToolStripMenuItem.Checked = True
-        Me.LightToolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked
         Me.LightToolStripMenuItem.Name = "LightToolStripMenuItem"
-        Me.LightToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.LightToolStripMenuItem.Size = New System.Drawing.Size(151, 22)
         Me.LightToolStripMenuItem.Text = "Light"
         '
         'DarkToolStripMenuItem
         '
         Me.DarkToolStripMenuItem.Name = "DarkToolStripMenuItem"
-        Me.DarkToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.DarkToolStripMenuItem.Size = New System.Drawing.Size(151, 22)
         Me.DarkToolStripMenuItem.Text = "Dark"
         '
         'MonokaiToolStripMenuItem
         '
         Me.MonokaiToolStripMenuItem.Name = "MonokaiToolStripMenuItem"
-        Me.MonokaiToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.MonokaiToolStripMenuItem.Size = New System.Drawing.Size(151, 22)
         Me.MonokaiToolStripMenuItem.Text = "Monokai"
         '
         'DraculaToolStripMenuItem
         '
         Me.DraculaToolStripMenuItem.Name = "DraculaToolStripMenuItem"
-        Me.DraculaToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.DraculaToolStripMenuItem.Size = New System.Drawing.Size(151, 22)
         Me.DraculaToolStripMenuItem.Text = "Dracula"
         '
         'NordToolStripMenuItem
         '
         Me.NordToolStripMenuItem.Name = "NordToolStripMenuItem"
-        Me.NordToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.NordToolStripMenuItem.Size = New System.Drawing.Size(151, 22)
         Me.NordToolStripMenuItem.Text = "Nord"
         '
         'SolarizedDarkToolStripMenuItem
         '
         Me.SolarizedDarkToolStripMenuItem.Name = "SolarizedDarkToolStripMenuItem"
-        Me.SolarizedDarkToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.SolarizedDarkToolStripMenuItem.Size = New System.Drawing.Size(151, 22)
         Me.SolarizedDarkToolStripMenuItem.Text = "Solarized Dark"
         '
         'SolarizedLightToolStripMenuItem
         '
         Me.SolarizedLightToolStripMenuItem.Name = "SolarizedLightToolStripMenuItem"
-        Me.SolarizedLightToolStripMenuItem.Size = New System.Drawing.Size(165, 22)
+        Me.SolarizedLightToolStripMenuItem.Size = New System.Drawing.Size(151, 22)
         Me.SolarizedLightToolStripMenuItem.Text = "Solarized Light"
         '
         'UILanguageToolStripMenuItem
@@ -498,18 +687,18 @@ Partial Class Form1
         Me.ToolBarPanel.Location = New System.Drawing.Point(326, 174)
         Me.ToolBarPanel.Name = "ToolBarPanel"
         Me.ToolBarPanel.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
-        Me.ToolBarPanel.Size = New System.Drawing.Size(389, 30)
+        Me.ToolBarPanel.Size = New System.Drawing.Size(327, 30)
         Me.ToolBarPanel.TabIndex = 1
         '
         'ToolStrip1
         '
         Me.ToolStrip1.BackColor = System.Drawing.Color.Transparent
         Me.ToolStrip1.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden
-        Me.ToolStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.bNew, Me.bOpen, Me.bSave, Me.ToolStripSeparator2, Me.bFind})
+        Me.ToolStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.bNew, Me.bOpen, Me.bSave, Me.ToolStripSeparator2, Me.bFind, Me.ToolStripSeparator3, Me.bRun})
         Me.ToolStrip1.Location = New System.Drawing.Point(4, 3)
         Me.ToolStrip1.Name = "ToolStrip1"
         Me.ToolStrip1.RenderMode = System.Windows.Forms.ToolStripRenderMode.System
-        Me.ToolStrip1.Size = New System.Drawing.Size(381, 25)
+        Me.ToolStrip1.Size = New System.Drawing.Size(319, 25)
         Me.ToolStrip1.TabIndex = 0
         Me.ToolStrip1.Text = "ToolStrip1"
         '
@@ -729,7 +918,7 @@ Partial Class Form1
         Me.btnCloseFindPanel.Cursor = System.Windows.Forms.Cursors.Hand
         Me.btnCloseFindPanel.FlatAppearance.BorderSize = 0
         Me.btnCloseFindPanel.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.btnCloseFindPanel.Font = New System.Drawing.Font("Segoe UI", 10.0!, System.Drawing.FontStyle.Bold)
+        Me.btnCloseFindPanel.Font = New System.Drawing.Font("Segoe UI", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.btnCloseFindPanel.ForeColor = System.Drawing.Color.FromArgb(CType(CType(160, Byte), Integer), CType(CType(160, Byte), Integer), CType(CType(160, Byte), Integer))
         Me.btnCloseFindPanel.Location = New System.Drawing.Point(883, 5)
         Me.btnCloseFindPanel.Name = "btnCloseFindPanel"
@@ -866,12 +1055,18 @@ Partial Class Form1
         Me.Controls.Add(Me.btnScrollRight)
         Me.Controls.Add(Me.FindPanel)
         Me.Controls.Add(Me.EditorHostPanel)
+        Me.Controls.Add(Me.OutputPanel)
         Me.Controls.Add(Me.StatusStrip1)
         Me.MainMenuStrip = Me.MenuStrip1
         Me.MinimumSize = New System.Drawing.Size(700, 400)
         Me.Name = "Form1"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "CE++"
+        Me.OutputPanel.ResumeLayout(False)
+        Me.OutputPanelHeader.ResumeLayout(False)
+        Me.OutputPanelHeader.PerformLayout()
+        Me.pnlInputBar.ResumeLayout(False)
+        Me.pnlInputBar.PerformLayout()
         Me.MenuStrip1.ResumeLayout(False)
         Me.MenuStrip1.PerformLayout()
         Me.ToolBarPanel.ResumeLayout(False)
@@ -998,14 +1193,29 @@ Partial Class Form1
 
         btnCloseFindPanel.Location = New System.Drawing.Point(w - 30, 4)
 
-        Dim statusH = StatusStrip1.Height
-        Dim editorH = Math.Max(50, Me.ClientSize.Height - y - statusH)
+        Dim statusH As Integer = 23
+        Dim outputH As Integer = If(OutputPanel.Visible, _outputHeight, 0)
+
+        ' Hitung sisa tinggi untuk editor
+        Dim totalUsed As Integer = y + statusH + outputH
+        Dim editorH As Integer = Math.Max(50, Me.ClientSize.Height - totalUsed)
+
         EditorHostPanel.SetBounds(0, y, w, editorH)
 
+        If OutputPanel.Visible Then
+            Dim outY As Integer = Me.ClientSize.Height - statusH - outputH
+            OutputPanel.SetBounds(0, outY, w, outputH)
+            OutputPanel.BringToFront()
+            btnCloseOutput.Location = New Point(w - 26, 2)
+            btnClearOutput.Location = New Point(w - 54, 2)
+        End If
+
         StatusStrip1.SetBounds(0, Me.ClientSize.Height - statusH, w, statusH)
+        StatusStrip1.BringToFront()
     End Sub
 
     ' ─── Field declarations ───────────────────────────────────
+    Friend WithEvents ttOutput As System.Windows.Forms.ToolTip
     Friend WithEvents MenuStrip1 As System.Windows.Forms.MenuStrip
     Friend WithEvents ToolBarPanel As System.Windows.Forms.Panel
     Friend WithEvents TabsPanel As System.Windows.Forms.Panel
@@ -1109,6 +1319,24 @@ Partial Class Form1
     Friend WithEvents bSave As System.Windows.Forms.ToolStripButton
     Friend WithEvents ToolStripSeparator2 As System.Windows.Forms.ToolStripSeparator
     Friend WithEvents bFind As System.Windows.Forms.ToolStripButton
+    Friend WithEvents ToolStripSeparator3 As System.Windows.Forms.ToolStripSeparator
+    Friend WithEvents bRun As System.Windows.Forms.ToolStripButton
     Friend WithEvents NewToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+
+    Friend WithEvents RunToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents RunFileToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents SepRun1 As System.Windows.Forms.ToolStripSeparator
+    Friend WithEvents RunSettingsToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+
+    Friend WithEvents OutputPanel As System.Windows.Forms.Panel
+    Friend WithEvents OutputPanelHeader As System.Windows.Forms.Panel
+    Friend WithEvents lblOutputTitle As System.Windows.Forms.Label
+    Friend WithEvents btnClearOutput As System.Windows.Forms.Button
+    Friend WithEvents btnCloseOutput As System.Windows.Forms.Button
+    Friend WithEvents pnlInputBar As System.Windows.Forms.Panel
+    Friend WithEvents lblInputPrompt As System.Windows.Forms.Label
+    Friend WithEvents txtInput As System.Windows.Forms.TextBox
+    Friend WithEvents btnSendInput As System.Windows.Forms.Button
+    Friend WithEvents txtOutput As System.Windows.Forms.RichTextBox
 
 End Class

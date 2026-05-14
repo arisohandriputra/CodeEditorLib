@@ -56,7 +56,7 @@
   <ItemGroup>
     <Reference Include="CodeEditorLib, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CodeEditorLib_v1_2_fixed\CodeEditorLib_project_fixed\CodeEditorLib\bin\Debug\CodeEditorLib.dll</HintPath>
+      <HintPath>..\..\CE__fixed\CE__\bin\Debug\CodeEditorLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -95,6 +95,12 @@
     <Compile Include="frmKeyboard.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="frmRunSettings.Designer.vb">
+      <DependentUpon>frmRunSettings.vb</DependentUpon>
+    </Compile>
+    <Compile Include="frmRunSettings.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="LanguageManager.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
@@ -119,14 +125,10 @@
     <Content Include="Languages\id.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Resources\aboutpongo.gif" />
+    <None Include="Resources\heart.png" />
     <None Include="App.config" />
-    <None Include="Languages\ar.ini" />
-    <None Include="Languages\my.ini" />
-    <None Include="Languages\tpi.ini" />
     <None Include="Resources\kalaweit.png" />
-    <None Include="Languages\tl.ini" />
-    <None Include="Languages\vn.ini" />
-    <None Include="Languages\zh.ini" />
     <None Include="My Project\app.manifest" />
     <None Include="Resources\favicon.ico" />
     <None Include="Resources\CE++_Logo.png" />

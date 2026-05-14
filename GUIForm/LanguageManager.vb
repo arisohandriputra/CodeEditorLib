@@ -122,6 +122,12 @@ Public Class LanguageManager
     Public Function About(ByVal key As String, ByVal ParamArray args() As Object) As String
         Return GetString("About", key, args)
     End Function
+    Public Function Run(ByVal key As String, ByVal ParamArray args() As Object) As String
+        Return GetString("Run", key, args)
+    End Function
+    Public Function RunS(ByVal key As String) As String
+        Return GetString("RunSettings", key)
+    End Function
 
     Public Function GetAvailableLanguages() As List(Of LanguageInfo)
         Dim result As New List(Of LanguageInfo)

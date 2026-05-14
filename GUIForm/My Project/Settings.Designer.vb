@@ -65,6 +65,78 @@ Namespace My
                 Me("lang") = value
             End Set
         End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property themeset() As String
+            Get
+                Return CType(Me("themeset"),String)
+            End Get
+            Set
+                Me("themeset") = value
+            End Set
+        End Property
+
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property PythonPath() As String
+            Get
+                Return CType(Me("PythonPath"),String)
+            End Get
+            Set
+                Me("PythonPath") = value
+            End Set
+        End Property
+
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property CppPath() As String
+            Get
+                Return CType(Me("CppPath"),String)
+            End Get
+            Set
+                Me("CppPath") = value
+            End Set
+        End Property
+
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property NodePath() As String
+            Get
+                Return CType(Me("NodePath"),String)
+            End Get
+            Set
+                Me("NodePath") = value
+            End Set
+        End Property
+
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property RubyPath() As String
+            Get
+                Return CType(Me("RubyPath"),String)
+            End Get
+            Set
+                Me("RubyPath") = value
+            End Set
+        End Property
+
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property JavaPath() As String
+            Get
+                Return CType(Me("JavaPath"),String)
+            End Get
+            Set
+                Me("JavaPath") = value
+            End Set
+        End Property
     End Class
 End Namespace
 
